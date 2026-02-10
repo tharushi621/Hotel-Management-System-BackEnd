@@ -8,11 +8,13 @@ import dotenv from 'dotenv'
 import categoryRouter from './routes/categoryRoute.js'
 import roomRouter from './routes/roomroute.js'
 import bookingRouter from './routes/bookingRoute.js'
+import cors from 'cors'
 
 dotenv.config()
 
 const app = express()
 
+app.use(cors())
 
 app.use(bodyParser.json())
 
@@ -23,7 +25,7 @@ app.use((req,res,next)=>{
     if(token!=null){
         jwt.verify(token,process.env.JWT_KEY,(err,decoded)=>{
             if(decoded!=null){
-                req.user=decoded
+                req.body.user=decoded
                 next()
             }else{
                 next()

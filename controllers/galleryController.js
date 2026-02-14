@@ -44,3 +44,33 @@ export function getGalleryItem(req,res){
         }
     )
 }
+export function deleteGalleryIyem(req,res){
+    const id = req.params.id
+    const user = req.user
+
+    if(!user){
+        res.status(403).json({
+            message:"Please login to create a gallery item"
+        })
+        return
+    }
+    if(user.type != "admin"){
+        res.status(403).json({
+            message:"You are not authorized to create a gallery item"
+        })
+        return
+    }
+    GalleryItem.findByIdAndDelete(id).then(
+        ()=>{
+            res.json({
+                message:"Gallery item deleted successfully"
+            })
+        }
+    ).catch(
+        ()=>{
+            res.status(500).json({
+                message:"Gallery item deletion failed"
+            })
+        }
+    )
+}

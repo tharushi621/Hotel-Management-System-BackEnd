@@ -44,7 +44,7 @@ export function getGalleryItem(req,res){
         }
     )
 }
-export function deleteGalleryIyem(req,res){
+export function deleteGalleryItem(req,res){
     const id = req.params.id
     const user = req.user
 

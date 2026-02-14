@@ -1,11 +1,11 @@
 import express from 'express'
-import { createGalleryItems, deleteGalleryIyem, getGalleryItem } from '../controllers/galleryController.js'
+import { createGalleryItems, deleteGalleryItem, getGalleryItem } from '../controllers/galleryController.js'
 
 
 const galleryItemRouter = express.Router();
 
 galleryItemRouter.post("/",createGalleryItems)
 galleryItemRouter.get("/",getGalleryItem)
-galleryItemRouter.delete("/",deleteGalleryItem)
+galleryItemRouter.delete("/:id",deleteGalleryItem)
 
 export default galleryItemRouter

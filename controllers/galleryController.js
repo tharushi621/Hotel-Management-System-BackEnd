@@ -15,7 +15,7 @@ if(user.type!="admin"){
     })
     return
 }
-    const galleryItem = req.body.item
+    const galleryItem = req.body
 
     const newGalleryItem = new GalleryItem(galleryItem)
 
@@ -70,6 +70,38 @@ export function deleteGalleryItem(req,res){
         ()=>{
             res.status(500).json({
                 message:"Gallery item deletion failed"
+            })
+        }
+    )
+}
+export function updateGalleryItem(req,res){
+     const id = req.params.id
+    const user = req.user
+
+    if(!user){
+        res.status(403).json({
+            message:"Please login to update a gallery item"
+        })
+        return
+    }
+    if(user.type != "admin"){
+        res.status(403).json({
+            message:"You are not authorized to create a gallery item"
+        })
+        return
+    }
+    const galleryItem=req.body
+
+    GalleryItem.findByIdAndUpdate(id,galleryItem).then(
+        ()=>{
+            res.json({
+                message:"Gallery item updated successfully"
+            })
+        }
+    ).catch(
+        ()=>{
+            res.status(500).json({
+                message:"Gallery item update failed"
             })
         }
     )

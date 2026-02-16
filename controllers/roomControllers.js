@@ -1,129 +1,74 @@
 import Room from "../models/room.js";
 import { isAdminValid } from "./userController.js";
 
-export function createRoom(req,res){
-if(!isAdminValid(req)){
-    res.status(403).json({
-        message:"Forbidden"
-    })
-    return
+// CREATE ROOM
+export async function createRoom(req, res) {
+  if (!isAdminValid(req)) return res.status(403).json({ message: "Forbidden" });
+
+  try {
+    const newRoom = new Room(req.body);
+    const result = await newRoom.save();
+    res.json({ message: "Room created successfully", result });
+  } catch (err) {
+    res.status(500).json({ message: "Room creation failed", error: err.message });
+  }
 }
-const newRoom = new Room(req.body)
-newRoom.save().then(
-    (result)=>{
-        res.json({
-            message:"room created successfully",
-            result:result
-        })
-    }
-).catch(
-    (err)=>{
-        res.json({
-            message:"Room creation failed",
-            error:err
-        })
-    }
-)
+
+// DELETE ROOM
+export async function deleteRoom(req, res) {
+  if (!isAdminValid(req)) return res.status(403).json({ message: "Forbidden" });
+
+  const roomId = req.params.roomId;
+  try {
+    await Room.findOneAndDelete({ roomId });
+    res.json({ message: "Room deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Room deletion failed", error: err.message });
+  }
 }
-export function deleteRoom(req,res){
-    if(!isAdminValid(req)){
-        res.status(403).json({
-            message:"Forbidden"
-        })
-        return
-    }
-    const roomId = req.params.roomId
-    Room.findOneAndDelete({roomId:roomId}).then(
-        ()=>{
-            res.json({
-                message:"Room deleted successfully"
-            })
-        }
-    ).catch(
-        ()=>{
-            res.json({
-                message:"Room deletion failed"
-            })
-        }
-    )
+
+// FIND ROOM BY ID
+export async function findRoomById(req, res) {
+  const roomId = req.params.roomId;
+  try {
+    const result = await Room.findOne({ roomId });
+    if (!result) return res.status(404).json({ message: "Room not found" });
+    res.json({ message: "Room found", result });
+  } catch (err) {
+    res.status(500).json({ message: "Room search failed", error: err.message });
+  }
 }
-export function findRoomById(req,res){
-const roomId = req.params.roomId
-    Room.findOne({roomId:roomId}).then(
-        (result)=>{
-            if(result == null){
-               res.status(404).json({
-                message:"Room not found"
-               })
-               return
-            }else{
-                res.json({
-                   message:"Room found",
-                   result:result 
-                })
-            }
-        }
-    ).catch(
-        (err)=>{
-            res.json({
-                message:"Room search failed",
-                error:err
-            })
-        }
-    )
+
+// GET ALL ROOMS
+export async function getRooms(req, res) {
+  try {
+    const result = await Room.find();
+    res.json({ rooms: result });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to get rooms", error: err.message });
+  }
 }
-export function getRooms(req,res){
-    Room.find().then(
-        (result)=>{
-           res.json({
-            rooms:result
-           })
-        }
-    ).catch(
-        ()=>{
-            res,json({
-                message:"Failed to get rooms"
-            })
-        }
-    )
+
+// UPDATE ROOM
+export async function updateRoom(req, res) {
+  if (!isAdminValid(req)) return res.status(403).json({ message: "Forbidden" });
+
+  const roomId = req.params.roomId;
+  try {
+    await Room.findOneAndUpdate({ roomId }, req.body);
+    res.json({ message: "Room updated successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Room update failed", error: err.message });
+  }
 }
-export function updateRoom(req,res){
-    if(!isAdminValid(req)){
-        res.status(403).json({
-            message:"Forbidden"
-        })
-        return
-    }
-const roomId = req.params.roomId
-Room.findOneAndUpdate({roomId:roomId},req.body).then(
-    ()=>{
-        res.json(
-            {
-                message:"Room updated successfully"
-            }
-        )
-    }
-).catch(
-    ()=>{
-        res.json({
-            message:"Room update failed"
-        })
-    }
-)
-}
-export function getRoomsByCategory(req,res){
-    const category = req.params.category
-    Room.find({category:category}).then(
-        (result)=>{
-            res.json({
-                rooms:result
-            })
-        }
-    ).catch(
-        ()=>{
-            res.json({
-                message:"Failed to get rooms"
-            })
-        }
-    )
+
+// GET ROOMS BY CATEGORY
+export async function getRoomsByCategory(req, res) {
+  const category = req.params.category;
+  try {
+    const result = await Room.find({ category });
+    res.json({ rooms: result });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to get rooms", error: err.message });
+  }
 }

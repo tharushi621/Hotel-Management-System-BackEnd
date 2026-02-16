@@ -29,7 +29,7 @@ const bookingSchema = mongoose.Schema(
             required:true
         },
         end:{
-            type:String,
+            type:Date,
             required:true
         },
         timeStamp:{

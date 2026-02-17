@@ -1,12 +1,27 @@
-import express from 'express'
-import { createCategory, deleteCategory, getcategory, getCategoryByName, updateCategory } from '../controllers/categoryController.js'
+import express from "express";
+import {
+  createCategory,
+  deleteCategory,
+  getCategories,
+  getCategoryByName,
+  updateCategory,
+} from "../controllers/categoryController.js";
 
-const categoryRouter = express.Router()
+// ─── FIXES APPLIED ───────────────────────────────────────────────────────────
+// Old routes used :name param for delete & update.
+// Frontend AdminCategory sends MongoDB _id, so routes updated to use :id.
+// GET /  now calls renamed getCategories (was getcategory) which returns { list }
+// ─────────────────────────────────────────────────────────────────────────────
 
-categoryRouter.post("/",createCategory)
-categoryRouter.delete("/:name",deleteCategory)
-categoryRouter.get("/:name",getCategoryByName)
-categoryRouter.get("/",getcategory)
-categoryRouter.put("/:name",updateCategory)
+const categoryRouter = express.Router();
 
-export default categoryRouter
+// Public
+categoryRouter.get("/",              getCategories);       // GET  /api/categories
+categoryRouter.get("/:name",         getCategoryByName);   // GET  /api/categories/:name
+
+// Admin-protected
+categoryRouter.post("/",             createCategory);       // POST /api/categories
+categoryRouter.put("/:id",           updateCategory);       // PUT  /api/categories/:id
+categoryRouter.delete("/:id",        deleteCategory);       // DELETE /api/categories/:id
+
+export default categoryRouter;

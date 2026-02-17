@@ -1,120 +1,85 @@
 import Category from "../models/categories.js";
 import { isAdminValid } from "./userController.js";
 
-export function createCategory(req,res){
-    if (req.user==null){
-        res.status(401).json({
-            message:"Unauthorized"
-        })
-        return
+// ─── FIXES APPLIED ───────────────────────────────────────────────────────────
+// 1. createCategory  — use isAdminValid helper for consistency.
+// 2. deleteCategory  — was deleting by `name` param; frontend sends MongoDB _id.
+//                      Changed route param to :id and use findByIdAndDelete.
+//                      Restored auth guard (was commented out).
+// 3. getCategory     — renamed to getCategories, now returns { list: result }
+//                      so both frontend consumers (AdminCategory + CategoriesPage)
+//                      succeed with `res.data.list || res.data.categories`.
+// 4. updateCategory  — was updating by `name` param; frontend sends _id.
+//                      Changed route param to :id and use findByIdAndUpdate.
+// 5. All catch blocks now return proper HTTP status codes.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export async function createCategory(req, res) {
+  if (!isAdminValid(req)) {
+    return res.status(403).json({ message: "Forbidden" });
+  }
+
+  try {
+    const newCategory = new Category(req.body);
+    const result = await newCategory.save();
+    res.status(201).json({ message: "Category created successfully", result });
+  } catch (err) {
+    res.status(500).json({ message: "Category creation failed", error: err.message });
+  }
+}
+
+// FIX #2: param is now :id (MongoDB _id), auth guard restored
+export async function deleteCategory(req, res) {
+  if (!isAdminValid(req)) {
+    return res.status(403).json({ message: "Forbidden" });
+  }
+
+  try {
+    const deleted = await Category.findByIdAndDelete(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ message: "Category not found" });
     }
-    if (req.user.type != "admin"){
-        res.status(403).json({
-            message:"Forbidden"
-        })
-        return
+    res.json({ message: "Category deleted successfully", result: deleted });
+  } catch (err) {
+    res.status(500).json({ message: "Category deletion failed", error: err.message });
+  }
+}
+
+// FIX #3: returns { list: result } — matches frontend expectation
+export async function getCategories(req, res) {
+  try {
+    const result = await Category.find();
+    res.json({ list: result });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to get categories", error: err.message });
+  }
+}
+
+export async function getCategoryByName(req, res) {
+  try {
+    const result = await Category.findOne({ name: req.params.name });
+    if (!result) {
+      return res.status(404).json({ message: "Category not found" });
     }
-    const newCatgory = new Category(req.body)
-    newCatgory.save().then(
-        (result)=>{
-            res.json({
-                message:"Cateogory created successfully",
-                result:result
-            })
-        }
-    ).catch(
-        (err)=>{
-           res.json({
-                message:"Category creation failed",
-                error:err
-            })
-        }
-    )
+    res.json({ category: result });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to get category", error: err.message });
+  }
 }
-export function deleteCategory(req,res){
-    // if(req.user == null){
-    //     res.status(401).json(
-    //         {
-    //             message:"Unauthorized"
-    //         }
-    //     )
-    //     return
-    // }
-    // if (req.user.type != "admin"){
-    //     res.status(403).json({
-    //         message:"Forbidden"
-    //     })
-    //     return
-    // }
-    const name = req.params.name
-    Category.findOneAndDelete({name:name}).then(
-        ()=>{
-            res.json({
-                message:"Category deleted successfully"
-            })
-        }
-    ).catch(
-        ()=>{
-            res.json({
-                message:"Category creation failed"
-            })
-        }
-    )
-}
-export function getcategory(req,res){
-    Category.find().then(
-        (result)=>{
-            res.json({
-                categories:result
-            })
-        }).catch(
-            (result)=>{
-                res.json({
-                    message:"Failed to get categories"
-                })
-            }
-        )
-}
-export function getCategoryByName(req,res){
-     const name=req.params.name
-     Category.findOne({name:name}).then(
-        (result)=>{
-            if(result==null){
-                res.json({
-                    message:"Category not found"
-                })
-            }else{
-                res.json({
-                    category:result
-                })
-            }
-        }
-     ).catch(
-        ()=>{
-            res.json({
-                message:"Failed to get category"
-            })
-        }
-     )
-}
-export function updateCategory(req,res){
-    if (!isAdminValid(req)){
-        res.status(403).json({
-            message:"Unauthorized"
-        })
-        return
+
+// FIX #4: param is now :id (MongoDB _id)
+export async function updateCategory(req, res) {
+  if (!isAdminValid(req)) {
+    return res.status(403).json({ message: "Forbidden" });
+  }
+
+  try {
+    const updated = await Category.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!updated) {
+      return res.status(404).json({ message: "Category not found" });
     }
-    const name = req.params.name
-    Category.updateOne({name:name},req.body).then(
-        ()=>{
-            res.json({
-               message:"Category updated successfully"
-            })
-        }).catch(
-            ()=>{
-                res.json({
-                    message:"Failed to update category"
-                })
-            }
-        )
+    res.json({ message: "Category updated successfully", result: updated });
+  } catch (err) {
+    res.status(500).json({ message: "Category update failed", error: err.message });
+  }
 }

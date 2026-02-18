@@ -3,7 +3,7 @@ import Room from "../models/room.js";
 
 // Helper: generate unique bookingId
 function generateBookingId() {
-  return Date.now(); // simple unique number
+  return Date.now();
 }
 
 // Create booking by room
@@ -18,9 +18,15 @@ export async function createBooking(req, res) {
     if (!roomId || isNaN(s) || isNaN(e) || e <= s)
       return res.status(400).json({ message: "Invalid room or date range" });
 
-    // Check overlap for this room
+    // ✅ Check the room exists and is available
+    const room = await Room.findOne({ roomId: Number(roomId) });
+    if (!room) return res.status(404).json({ message: "Room not found" });
+    if (!room.available)
+      return res.status(409).json({ message: "This room is currently unavailable" });
+
+    // Check date overlap
     const overlapping = await Booking.findOne({
-      roomId,
+      roomId: Number(roomId),
       start: { $lt: e },
       end: { $gt: s },
     });
@@ -30,7 +36,7 @@ export async function createBooking(req, res) {
 
     const newBooking = new Booking({
       bookingId: generateBookingId(),
-      roomId,
+      roomId: Number(roomId),
       email: req.user.email,
       start: s,
       end: e,
@@ -57,21 +63,24 @@ export async function createBookingUsingCategory(req, res) {
     if (!category || isNaN(s) || isNaN(e) || e <= s)
       return res.status(400).json({ message: "Invalid category or date range" });
 
-    // Find occupied rooms
+    // Find rooms occupied in the date range
     const overlappingBookings = await Booking.find({
       start: { $lt: e },
       end: { $gt: s },
     });
-    const occupiedRooms = overlappingBookings.map(b => b.roomId);
+    const occupiedRoomIds = overlappingBookings.map((b) => b.roomId);
 
-    // Available rooms in category
+    // ✅ FIX: also filter available:true so unavailable rooms are excluded
     const availableRooms = await Room.find({
       category,
-      roomId: { $nin: occupiedRooms },
+      available: true,
+      roomId: { $nin: occupiedRoomIds },
     });
 
     if (!availableRooms.length)
-      return res.status(409).json({ message: "No rooms available" });
+      return res.status(409).json({
+        message: "No rooms available for the selected category and dates. Please try different dates.",
+      });
 
     const newBooking = new Booking({
       bookingId: generateBookingId(),
@@ -94,9 +103,10 @@ export async function createBookingUsingCategory(req, res) {
 export async function getAllBookings(req, res) {
   try {
     if (!req.user) return res.status(401).json({ message: "Please login" });
-    if (req.user.type !== "admin") return res.status(403).json({ message: "Not authorized" });
+    if (req.user.type !== "admin")
+      return res.status(403).json({ message: "Not authorized" });
 
-    const bookings = await Booking.find({});
+    const bookings = await Booking.find({}).sort({ start: -1 });
     return res.status(200).json({ message: "All bookings", result: bookings });
   } catch (err) {
     return res.status(500).json({ message: "Failed to get bookings", error: err.message });
@@ -107,7 +117,8 @@ export async function getAllBookings(req, res) {
 export async function deleteBooking(req, res) {
   try {
     if (!req.user) return res.status(401).json({ message: "Please login" });
-    if (req.user.type !== "admin") return res.status(403).json({ message: "Not authorized" });
+    if (req.user.type !== "admin")
+      return res.status(403).json({ message: "Not authorized" });
 
     const bookingId = Number(req.params.id);
     const deleted = await Booking.findOneAndDelete({ bookingId });

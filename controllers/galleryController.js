@@ -1,108 +1,68 @@
 import GalleryItem from "../models/gallery.js";
 
-export function createGalleryItems(req,res){
-const user = req.user 
+/**
+ * Create a gallery item (Admin only)
+ */
+export async function createGalleryItems(req, res) {
+  try {
+    const user = req.user;
+    if (!user) return res.status(401).json({ message: "Please login" });
+    if (user.type !== "admin") return res.status(403).json({ message: "Not authorized" });
 
-if(user==null){
-    res.status(403).json({
-        message:"Please login to create a gallery item"
-    })
-    return
+    const galleryItem = req.body;
+    const newGalleryItem = new GalleryItem(galleryItem);
+    const result = await newGalleryItem.save();
+
+    res.status(201).json({ message: "Gallery item created successfully", result });
+  } catch (err) {
+    res.status(500).json({ message: "Gallery item creation failed", error: err.message || err });
+  }
 }
-if(user.type!="admin"){
-    res.status(403).json({
-        message:"not authorized to create a gallery item"
-    })
-    return
+
+/**
+ * Get all gallery items (Public)
+ */
+export async function getGalleryItem(req, res) {
+  try {
+    const galleryItemList = await GalleryItem.find();
+    res.status(200).json({ list: galleryItemList });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch gallery items", error: err.message || err });
+  }
 }
-    const galleryItem = req.body
 
-    const newGalleryItem = new GalleryItem(galleryItem)
+/**
+ * Delete a gallery item (Admin only)
+ */
+export async function deleteGalleryItem(req, res) {
+  try {
+    const user = req.user;
+    if (!user) return res.status(401).json({ message: "Please login" });
+    if (user.type !== "admin") return res.status(403).json({ message: "Not authorized" });
 
-    newGalleryItem.save().then(
-        ()=>{
-            res.json(
-                {
-                    message:"Gallery Item created successfully"
-                }
-            )
-        }
-    ).catch(
-        ()=>{
-            res.status(500).json({
-                  message:"Gallery Item creation failed"
-            })
-        }
-    )
+    const deleted = await GalleryItem.findByIdAndDelete(req.params.id);
+    if (!deleted) return res.status(404).json({ message: "Gallery item not found" });
+
+    res.status(200).json({ message: "Gallery item deleted successfully", result: deleted });
+  } catch (err) {
+    res.status(500).json({ message: "Gallery item deletion failed", error: err.message || err });
+  }
 }
-export function getGalleryItem(req,res){
-    GalleryItem.find().then(
-        (galleryItemList)=>{
-            res.json({
-                list:galleryItemList
-            })
-        }
-    )
-}
-export function deleteGalleryItem(req,res){
-    const id = req.params.id
-    const user = req.user
 
-    if(!user){
-        res.status(403).json({
-            message:"Please login to create a gallery item"
-        })
-        return
-    }
-    if(user.type != "admin"){
-        res.status(403).json({
-            message:"You are not authorized to create a gallery item"
-        })
-        return
-    }
-    GalleryItem.findByIdAndDelete(id).then(
-        ()=>{
-            res.json({
-                message:"Gallery item deleted successfully"
-            })
-        }
-    ).catch(
-        ()=>{
-            res.status(500).json({
-                message:"Gallery item deletion failed"
-            })
-        }
-    )
-}
-export function updateGalleryItem(req,res){
-     const id = req.params.id
-    const user = req.user
+/**
+ * Update a gallery item (Admin only)
+ */
+export async function updateGalleryItem(req, res) {
+  try {
+    const user = req.user;
+    if (!user) return res.status(401).json({ message: "Please login" });
+    if (user.type !== "admin") return res.status(403).json({ message: "Not authorized" });
 
-    if(!user){
-        res.status(403).json({
-            message:"Please login to update a gallery item"
-        })
-        return
-    }
-    if(user.type != "admin"){
-        res.status(403).json({
-            message:"You are not authorized to create a gallery item"
-        })
-        return
-    }
-    const galleryItem=req.body
+    const updated = await GalleryItem.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!updated) return res.status(404).json({ message: "Gallery item not found" });
 
-    GalleryItem.findByIdAndUpdate(id,galleryItem).then(
-        ()=>{
-            res.json({
-                message:"Gallery item updated successfully"
-            })
-        }
-    ).catch(
-        ()=>{
-            res.status(500).json({
-                message:"Gallery item update failed"
-            })
-        }
-    )
+    res.status(200).json({ message: "Gallery item updated successfully", result: updated });
+  } catch (err) {
+    res.status(500).json({ message: "Gallery item update failed", error: err.message || err });
+  }
 }

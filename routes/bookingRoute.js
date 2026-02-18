@@ -1,12 +1,21 @@
-import express from 'express'
-import {getAllBookings, createBooking, deleteBooking, retrieveBookingByDate, createBookingUsingCategory } from '../controllers/bookingController.js'
+import express from 'express';
+import {
+  getAllBookings,
+  createBooking,
+  deleteBooking,
+  retrieveBookingByDate,
+  createBookingUsingCategory,
+} from '../controllers/bookingController.js';
+import { protect } from '../middleware/authMiddleware.js';
 
-const bookingRouter= express.Router()
+const bookingRouter = express.Router();
 
-bookingRouter.post("/",createBooking)
-bookingRouter.get("/",getAllBookings)
-bookingRouter.post("/filter-date",retrieveBookingByDate)
-bookingRouter.post("/create-by-category",createBookingUsingCategory)
-bookingRouter.delete("/:id", deleteBooking)
+// Protected routes (login required)
+bookingRouter.post("/", protect, createBooking); 
+bookingRouter.post("/create-by-category", protect, createBookingUsingCategory); 
+bookingRouter.post("/filter-date", protect, retrieveBookingByDate); 
 
-export default bookingRouter
+// Admin-only routes
+bookingRouter.delete("/:id", protect, deleteBooking);
+
+export default bookingRouter;

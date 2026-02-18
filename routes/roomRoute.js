@@ -1,21 +1,17 @@
 import express from "express";
-import {
-  createRoom,
-  deleteRoom,
-  findRoomById,
-  getRooms,
-  getRoomsByCategory,
-  updateRoom,
-} from "../controllers/roomControllers.js";
+import { createRoom,deleteRoom,updateRoom,getRoomsByCategory,findRoomById,getRooms } from "../controllers/roomControllers.js";
+import { protect } from "../middleware/authMiddleware.js";
 
 const roomRouter = express.Router();
 
-// Routes
-roomRouter.post("/", createRoom);
-roomRouter.delete("/:roomId", deleteRoom);
-roomRouter.get("/", getRooms);
-roomRouter.get("/:category", getRoomsByCategory); // updated to match frontend
-roomRouter.get("/:roomId", findRoomById);
-roomRouter.put("/:roomId", updateRoom);
+// Admin Routes
+roomRouter.post("/", protect, createRoom);           
+roomRouter.delete("/:roomId", protect, deleteRoom); 
+roomRouter.patch("/:roomId", protect, updateRoom); 
+
+// Public Routes
+roomRouter.get("/category/:category", getRoomsByCategory);
+roomRouter.get("/:roomId", findRoomById);        
+roomRouter.get("/", getRooms);                     
 
 export default roomRouter;

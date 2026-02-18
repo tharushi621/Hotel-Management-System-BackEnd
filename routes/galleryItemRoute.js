@@ -1,12 +1,20 @@
-import express from 'express'
-import { createGalleryItems, deleteGalleryItem, getGalleryItem, updateGalleryItem } from '../controllers/galleryController.js'
-
+import express from "express";
+import {
+  createGalleryItems,
+  deleteGalleryItem,
+  getGalleryItem,
+  updateGalleryItem
+} from "../controllers/galleryController.js";
+import { protect } from "../middleware/authMiddleware.js"; // make sure protect is applied
 
 const galleryItemRouter = express.Router();
 
-galleryItemRouter.post("/",createGalleryItems)
-galleryItemRouter.get("/",getGalleryItem)
-galleryItemRouter.delete("/:id",deleteGalleryItem)
-galleryItemRouter.put("/:id",updateGalleryItem)
+// Public route
+galleryItemRouter.get("/", getGalleryItem);
 
-export default galleryItemRouter
+// Admin-only routes (login required)
+galleryItemRouter.post("/", protect, createGalleryItems);
+galleryItemRouter.put("/:id", protect, updateGalleryItem);
+galleryItemRouter.delete("/:id", protect, deleteGalleryItem);
+
+export default galleryItemRouter;

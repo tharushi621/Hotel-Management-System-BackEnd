@@ -7,23 +7,29 @@ import nodemailer from "nodemailer";
 
 dotenv.config();
 
+//Post User
 export async function postUsers(req, res) {
   try {
     const { firstName, lastName, email, password, phone, whatsApp } = req.body;
 
     if (!firstName || !lastName || !email || !password || !phone || !whatsApp) {
       return res.status(400).json({
-        message: "All fields are required: firstName, lastName, email, password, phone, whatsApp",
+        message:
+          "All fields are required: firstName, lastName, email, password, phone, whatsApp",
       });
     }
 
     if (password.length < 6) {
-      return res.status(400).json({ message: "Password must be at least 6 characters." });
+      return res
+        .status(400)
+        .json({ message: "Password must be at least 6 characters." });
     }
 
     const existing = await User.findOne({ email });
     if (existing) {
-      return res.status(409).json({ message: "This email is already registered." });
+      return res
+        .status(409)
+        .json({ message: "This email is already registered." });
     }
 
     const saltRounds = 10;
@@ -36,7 +42,7 @@ export async function postUsers(req, res) {
       password: passwordHash,
       phone,
       whatsApp,
-      type: "user",          // default role
+      type: "user",
       disabled: false,
       emailVerified: false,
     });
@@ -48,20 +54,26 @@ export async function postUsers(req, res) {
     await newOtp.save();
 
     sendOtpEmail(email, otp).catch((err) =>
-      console.error("OTP email send failed (non-fatal):", err)
+      console.error("OTP email send failed (non-fatal):", err),
     );
 
-    res.status(201).json({ message: "User created successfully, OTP sent to email" });
+    res
+      .status(201)
+      .json({ message: "User created successfully, OTP sent to email" });
   } catch (error) {
     console.error("Error creating user:", error);
     if (error.code === 11000) {
-      return res.status(409).json({ message: "This email is already registered." });
+      return res
+        .status(409)
+        .json({ message: "This email is already registered." });
     }
-    res.status(500).json({ message: "User creation failed", error: error.message });
+    res
+      .status(500)
+      .json({ message: "User creation failed", error: error.message });
   }
 }
 
-/* ================= LOGIN USER ================= */
+//login user
 export async function loginUser(req, res) {
   try {
     const { email, password } = req.body;
@@ -73,7 +85,9 @@ export async function loginUser(req, res) {
     if (!user) return res.status(404).json({ message: "User not found" });
 
     if (user.disabled)
-      return res.status(403).json({ message: "This account has been disabled." });
+      return res
+        .status(403)
+        .json({ message: "This account has been disabled." });
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid)
@@ -97,32 +111,24 @@ export async function loginUser(req, res) {
   }
 }
 
-/* ================= ROLE CHECKS ================= */
+//Role check
 export function isAdminValid(req) {
-  return req.user && req.user.type === "admin";
+  return !!(req.user && req.user.type === "admin");
 }
-
-// ─── FIX ─────────────────────────────────────────────────────────────────────
-// isCustomerValid was checking for type === "customer" but postUsers() sets
-// type === "user" by default. This meant NO regular user could ever create
-// a booking or feedback — they would always get 403 Forbidden.
-//
-// Fix: treat both "user" and "customer" as valid customer roles.
-// This way existing users work immediately without a DB migration.
-// If you want to strictly use "customer", run a migration to update all
-// existing "user" records to "customer" AND update postUsers() default.
-// ─────────────────────────────────────────────────────────────────────────────
 export function isCustomerValid(req) {
-  return req.user && (req.user.type === "customer" || req.user.type === "user");
+  return !!(
+    req.user &&
+    (req.user.type === "customer" || req.user.type === "user")
+  );
 }
 
-/* ================= GET CURRENT USER ================= */
+//Get current user
 export function getUser(req, res) {
   if (!req.user) return res.status(404).json({ message: "User not found" });
   res.status(200).json({ message: "User found", user: req.user });
 }
 
-/* ================= SEND OTP EMAIL ================= */
+//Send OTP email
 export async function sendOtpEmail(email, otp) {
   if (!email) {
     console.log("No email provided, skipping OTP email");
@@ -145,7 +151,7 @@ export async function sendOtpEmail(email, otp) {
   console.log("OTP email sent:", info.response);
 }
 
-/* ================= VERIFY USER EMAIL ================= */
+//Verify user email
 export async function verifyUserEmail(req, res) {
   try {
     const { email, otp } = req.body;
@@ -167,14 +173,15 @@ export async function verifyUserEmail(req, res) {
     res.status(200).json({ message: "User email verified successfully" });
   } catch (err) {
     console.error("Email verification error:", err);
-    res.status(500).json({ message: "Email verification failed", error: err.message });
+    res
+      .status(500)
+      .json({ message: "Email verification failed", error: err.message });
   }
 }
 
-/* ================= DISABLE / ENABLE USER ================= */
+//Disable/enable user
 export async function disableUser(req, res) {
-  if (!isAdminValid(req))
-    return res.status(403).json({ message: "Forbidden" });
+  if (!isAdminValid(req)) return res.status(403).json({ message: "Forbidden" });
 
   try {
     const { userId } = req.params;
@@ -182,14 +189,15 @@ export async function disableUser(req, res) {
     await User.findOneAndUpdate({ _id: userId }, { disabled });
     res.json({ message: "User disabled/enabled successfully" });
   } catch (err) {
-    res.status(500).json({ message: "User disable/enable failed", error: err.message });
+    res
+      .status(500)
+      .json({ message: "User disable/enable failed", error: err.message });
   }
 }
 
-/* ================= CHANGE USER TYPE ================= */
+//Change the user type
 export async function changeUserType(req, res) {
-  if (!isAdminValid(req))
-    return res.status(403).json({ message: "Forbidden" });
+  if (!isAdminValid(req)) return res.status(403).json({ message: "Forbidden" });
 
   try {
     const { userId } = req.params;
@@ -197,20 +205,24 @@ export async function changeUserType(req, res) {
     await User.findOneAndUpdate({ _id: userId }, { type });
     res.json({ message: "User type updated successfully" });
   } catch (err) {
-    res.status(500).json({ message: "User type update failed", error: err.message });
+    res
+      .status(500)
+      .json({ message: "User type update failed", error: err.message });
   }
 }
 
-/* ================= GET ALL USERS (PAGINATION) ================= */
+///Get all users (Pagination)/
 export async function getAllUsers(req, res) {
   if (!isAdminValid(req)) {
-    return res.status(403).json({ message: "Forbidden" });
+    return res
+      .status(403)
+      .json({ message: "Forbidden: admin access required" });
   }
 
   try {
-    const page  = parseInt(req.body.page  || req.query.page)  || 1;
+    const page = parseInt(req.body.page || req.query.page) || 1;
     const limit = parseInt(req.body.limit || req.query.limit) || 10;
-    const skip  = (page - 1) * limit;
+    const skip = (page - 1) * limit;
 
     const totalUsers = await User.countDocuments();
     const users = await User.find()
@@ -228,14 +240,18 @@ export async function getAllUsers(req, res) {
       users,
     });
   } catch (err) {
-    res.status(500).json({ message: "Failed to retrieve users", error: err.message });
+    res
+      .status(500)
+      .json({ message: "Failed to retrieve users", error: err.message });
   }
 }
 
-/* ================= DELETE USER BY ID ================= */
+//Delete user by ID
 export async function deleteUserById(req, res) {
   if (!isAdminValid(req))
-    return res.status(403).json({ message: "Forbidden" });
+    return res
+      .status(403)
+      .json({ message: "Forbidden: admin access required" });
 
   try {
     const userId = req.params.id;

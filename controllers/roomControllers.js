@@ -1,14 +1,6 @@
 import Room from "../models/room.js";
 import { isAdminValid } from "./userController.js";
 
-// ─── FIXES APPLIED ───────────────────────────────────────────────────────────
-// RoomsPage calls: GET /api/rooms?category=<categoryId>
-// Old getRooms() ignored query params and returned ALL rooms.
-// Fix: getRooms now checks req.query.category and filters if provided.
-// The existing getRoomsByCategory (route param version) is kept for backwards
-// compatibility but is no longer needed by the current frontend.
-// ─────────────────────────────────────────────────────────────────────────────
-
 // CREATE ROOM
 export async function createRoom(req, res) {
   if (!isAdminValid(req)) return res.status(403).json({ message: "Forbidden" });
@@ -18,7 +10,9 @@ export async function createRoom(req, res) {
     const result = await newRoom.save();
     res.json({ message: "Room created successfully", result });
   } catch (err) {
-    res.status(500).json({ message: "Room creation failed", error: err.message });
+    res
+      .status(500)
+      .json({ message: "Room creation failed", error: err.message });
   }
 }
 
@@ -32,7 +26,9 @@ export async function deleteRoom(req, res) {
     if (!deleted) return res.status(404).json({ message: "Room not found" });
     res.json({ message: "Room deleted successfully" });
   } catch (err) {
-    res.status(500).json({ message: "Room deletion failed", error: err.message });
+    res
+      .status(500)
+      .json({ message: "Room deletion failed", error: err.message });
   }
 }
 
@@ -48,18 +44,19 @@ export async function findRoomById(req, res) {
   }
 }
 
-// GET ALL ROOMS — FIX: supports ?category=<value> query param
+// GET ALL ROOMS 
 export async function getRooms(req, res) {
   try {
     const filter = {};
-    // FIX: RoomsPage sends ?category=<categoryId> — filter if provided
     if (req.query.category) {
       filter.category = req.query.category;
     }
     const result = await Room.find(filter);
     res.json({ rooms: result });
   } catch (err) {
-    res.status(500).json({ message: "Failed to get rooms", error: err.message });
+    res
+      .status(500)
+      .json({ message: "Failed to get rooms", error: err.message });
   }
 }
 
@@ -69,7 +66,9 @@ export async function updateRoom(req, res) {
 
   const roomId = req.params.roomId;
   try {
-    const updated = await Room.findOneAndUpdate({ roomId }, req.body, { new: true });
+    const updated = await Room.findOneAndUpdate({ roomId }, req.body, {
+      new: true,
+    });
     if (!updated) return res.status(404).json({ message: "Room not found" });
     res.json({ message: "Room updated successfully", result: updated });
   } catch (err) {
@@ -77,13 +76,15 @@ export async function updateRoom(req, res) {
   }
 }
 
-// GET ROOMS BY CATEGORY (route param — kept for backwards compat)
+// GET ROOMS BY CATEGORY 
 export async function getRoomsByCategory(req, res) {
   const category = req.params.category;
   try {
     const result = await Room.find({ category });
     res.json({ rooms: result });
   } catch (err) {
-    res.status(500).json({ message: "Failed to get rooms", error: err.message });
+    res
+      .status(500)
+      .json({ message: "Failed to get rooms", error: err.message });
   }
 }

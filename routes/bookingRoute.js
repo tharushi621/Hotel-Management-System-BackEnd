@@ -11,9 +11,10 @@ import { protect } from '../middleware/authMiddleware.js';
 const bookingRouter = express.Router();
 
 // Protected routes (login required)
-bookingRouter.post("/", protect, createBooking); 
-bookingRouter.post("/create-by-category", protect, createBookingUsingCategory); 
-bookingRouter.post("/filter-date", protect, retrieveBookingByDate); 
+bookingRouter.get("/", protect, getAllBookings);                          // FIX: was missing — AdminBooking needs GET /api/bookings
+bookingRouter.post("/", protect, createBooking);
+bookingRouter.post("/create-by-category", protect, createBookingUsingCategory); // FIX: was "/category" in frontend — standardised here
+bookingRouter.post("/filter-date", protect, retrieveBookingByDate);
 
 // Admin-only routes
 bookingRouter.delete("/:id", protect, deleteBooking);

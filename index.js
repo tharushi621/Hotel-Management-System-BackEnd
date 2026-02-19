@@ -18,8 +18,8 @@ const app = express();
 // Middleware
 app.use(cors({
   origin: [
-    process.env.FRONTEND_URL,
-    process.env.LOCAL_URL
+    "https://hotel-management-system-front-end.vercel.app",
+    "http://localhost:5173"
   ],
   credentials: true
 }));

@@ -10,7 +10,9 @@ export async function createRoom(req, res) {
     const result = await newRoom.save();
     res.json({ message: "Room created successfully", result });
   } catch (err) {
-    res.status(500).json({ message: "Room creation failed", error: err.message });
+    res
+      .status(500)
+      .json({ message: "Room creation failed", error: err.message });
   }
 }
 
@@ -25,7 +27,9 @@ export async function deleteRoom(req, res) {
     if (!deleted) return res.status(404).json({ message: "Room not found" });
     res.json({ message: "Room deleted successfully" });
   } catch (err) {
-    res.status(500).json({ message: "Room deletion failed", error: err.message });
+    res
+      .status(500)
+      .json({ message: "Room deletion failed", error: err.message });
   }
 }
 
@@ -52,7 +56,9 @@ export async function getRooms(req, res) {
     const result = await Room.find(filter);
     res.json({ rooms: result });
   } catch (err) {
-    res.status(500).json({ message: "Failed to get rooms", error: err.message });
+    res
+      .status(500)
+      .json({ message: "Failed to get rooms", error: err.message });
   }
 }
 
@@ -63,7 +69,9 @@ export async function updateRoom(req, res) {
   // ✅ FIX: cast to Number
   const roomId = Number(req.params.roomId);
   try {
-    const updated = await Room.findOneAndUpdate({ roomId }, req.body, { new: true });
+    const updated = await Room.findOneAndUpdate({ roomId }, req.body, {
+      new: true,
+    });
     if (!updated) return res.status(404).json({ message: "Room not found" });
     res.json({ message: "Room updated successfully", result: updated });
   } catch (err) {
@@ -78,6 +86,8 @@ export async function getRoomsByCategory(req, res) {
     const result = await Room.find({ category });
     res.json({ rooms: result });
   } catch (err) {
-    res.status(500).json({ message: "Failed to get rooms", error: err.message });
+    res
+      .status(500)
+      .json({ message: "Failed to get rooms", error: err.message });
   }
 }

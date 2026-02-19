@@ -10,7 +10,6 @@ dotenv.config();
 //Post User
 export async function postUsers(req, res) {
   try {
-    // ✅ FIX: added "type" to destructuring
     const { firstName, lastName, email, password, phone, whatsApp, type } =
       req.body;
 
@@ -44,7 +43,7 @@ export async function postUsers(req, res) {
       password: passwordHash,
       phone,
       whatsApp,
-      type: type || "user", // ✅ FIX: uses sent type, defaults to "user"
+      type: type || "user", 
       disabled: false,
       emailVerified: false,
     });

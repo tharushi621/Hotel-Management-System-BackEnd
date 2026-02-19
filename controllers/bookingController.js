@@ -18,7 +18,7 @@ export async function createBooking(req, res) {
     if (!roomId || isNaN(s) || isNaN(e) || e <= s)
       return res.status(400).json({ message: "Invalid room or date range" });
 
-    // ✅ Check the room exists and is available
+    // Check the room exists and is available
     const room = await Room.findOne({ roomId: Number(roomId) });
     if (!room) return res.status(404).json({ message: "Room not found" });
     if (!room.available)
@@ -78,7 +78,6 @@ export async function createBookingUsingCategory(req, res) {
     });
     const occupiedRoomIds = overlappingBookings.map((b) => b.roomId);
 
-    // ✅ FIX: also filter available:true so unavailable rooms are excluded
     const availableRooms = await Room.find({
       category,
       available: true,

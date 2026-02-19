@@ -22,7 +22,9 @@ export async function createBooking(req, res) {
     const room = await Room.findOne({ roomId: Number(roomId) });
     if (!room) return res.status(404).json({ message: "Room not found" });
     if (!room.available)
-      return res.status(409).json({ message: "This room is currently unavailable" });
+      return res
+        .status(409)
+        .json({ message: "This room is currently unavailable" });
 
     // Check date overlap
     const overlapping = await Booking.findOne({
@@ -32,7 +34,9 @@ export async function createBooking(req, res) {
     });
 
     if (overlapping)
-      return res.status(409).json({ message: "Room is already booked in this time range" });
+      return res
+        .status(409)
+        .json({ message: "Room is already booked in this time range" });
 
     const newBooking = new Booking({
       bookingId: generateBookingId(),
@@ -47,7 +51,9 @@ export async function createBooking(req, res) {
     const result = await newBooking.save();
     return res.status(201).json({ message: "Booking created", result });
   } catch (err) {
-    return res.status(500).json({ message: "Booking creation failed", error: err.message });
+    return res
+      .status(500)
+      .json({ message: "Booking creation failed", error: err.message });
   }
 }
 
@@ -61,7 +67,9 @@ export async function createBookingUsingCategory(req, res) {
     const e = new Date(end);
 
     if (!category || isNaN(s) || isNaN(e) || e <= s)
-      return res.status(400).json({ message: "Invalid category or date range" });
+      return res
+        .status(400)
+        .json({ message: "Invalid category or date range" });
 
     // Find rooms occupied in the date range
     const overlappingBookings = await Booking.find({
@@ -79,7 +87,8 @@ export async function createBookingUsingCategory(req, res) {
 
     if (!availableRooms.length)
       return res.status(409).json({
-        message: "No rooms available for the selected category and dates. Please try different dates.",
+        message:
+          "No rooms available for the selected category and dates. Please try different dates.",
       });
 
     const newBooking = new Booking({
@@ -95,7 +104,9 @@ export async function createBookingUsingCategory(req, res) {
     const result = await newBooking.save();
     return res.status(201).json({ message: "Booking created", result });
   } catch (err) {
-    return res.status(500).json({ message: "Booking creation failed", error: err.message });
+    return res
+      .status(500)
+      .json({ message: "Booking creation failed", error: err.message });
   }
 }
 
@@ -109,7 +120,9 @@ export async function getAllBookings(req, res) {
     const bookings = await Booking.find({}).sort({ start: -1 });
     return res.status(200).json({ message: "All bookings", result: bookings });
   } catch (err) {
-    return res.status(500).json({ message: "Failed to get bookings", error: err.message });
+    return res
+      .status(500)
+      .json({ message: "Failed to get bookings", error: err.message });
   }
 }
 
@@ -124,9 +137,13 @@ export async function deleteBooking(req, res) {
     const deleted = await Booking.findOneAndDelete({ bookingId });
     if (!deleted) return res.status(404).json({ message: "Booking not found" });
 
-    return res.status(200).json({ message: "Booking deleted", result: deleted });
+    return res
+      .status(200)
+      .json({ message: "Booking deleted", result: deleted });
   } catch (err) {
-    return res.status(500).json({ message: "Failed to delete booking", error: err.message });
+    return res
+      .status(500)
+      .json({ message: "Failed to delete booking", error: err.message });
   }
 }
 
@@ -148,6 +165,8 @@ export async function retrieveBookingByDate(req, res) {
 
     return res.status(200).json({ message: "Filtered bookings", result });
   } catch (err) {
-    return res.status(500).json({ message: "Failed to get filtered bookings", error: err.message });
+    return res
+      .status(500)
+      .json({ message: "Failed to get filtered bookings", error: err.message });
   }
 }

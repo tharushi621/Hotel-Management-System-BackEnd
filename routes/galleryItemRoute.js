@@ -3,9 +3,9 @@ import {
   createGalleryItems,
   deleteGalleryItem,
   getGalleryItem,
-  updateGalleryItem
+  updateGalleryItem,
 } from "../controllers/galleryController.js";
-import { protect } from "../middleware/authMiddleware.js"; // make sure protect is applied
+import { protect } from "../middleware/authMiddleware.js";
 
 const galleryItemRouter = express.Router();
 

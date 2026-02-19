@@ -17,13 +17,14 @@ const app = express();
 
 // Middleware
 app.use(cors());
-app.use(express.json()); // built-in body parser
+app.use(express.json());
 
 // MongoDB connection
 const connectionString = process.env.MONGO_URL;
-mongoose.connect(connectionString)
+mongoose
+  .connect(connectionString)
   .then(() => console.log("Connected to the database"))
-  .catch(err => console.error("MongoDB connection failed:", err.message));
+  .catch((err) => console.error("MongoDB connection failed:", err.message));
 
 // API Routes
 app.use("/api/users", userRouter);

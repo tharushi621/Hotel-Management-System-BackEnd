@@ -11,7 +11,8 @@ dotenv.config();
 export async function postUsers(req, res) {
   try {
     // ✅ FIX: added "type" to destructuring
-    const { firstName, lastName, email, password, phone, whatsApp, type } = req.body;
+    const { firstName, lastName, email, password, phone, whatsApp, type } =
+      req.body;
 
     if (!firstName || !lastName || !email || !password || !phone || !whatsApp) {
       return res.status(400).json({
@@ -212,7 +213,7 @@ export async function changeUserType(req, res) {
   }
 }
 
-///Get all users (Pagination)/
+///Get all users (Pagination)
 export async function getAllUsers(req, res) {
   if (!isAdminValid(req)) {
     return res

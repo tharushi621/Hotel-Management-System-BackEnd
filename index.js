@@ -15,18 +15,26 @@ dotenv.config();
 
 const app = express();
 
-// Middleware
+// CORS — must be before all routes
 app.use(cors({
   origin: [
     "https://hotel-management-system-front-end.vercel.app",
     "http://localhost:5173"
   ],
-  credentials: true
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
 }));
+
+// Handle preflight requests for all routes
+app.options("*", cors());
+
+// Body parser
 app.use(express.json());
 
 // MongoDB connection
 const connectionString = process.env.MONGO_URL;
+
 mongoose
   .connect(connectionString)
   .then(() => console.log("Connected to the database"))
@@ -39,6 +47,11 @@ app.use("/api/categories", categoryRouter);
 app.use("/api/rooms", roomRouter);
 app.use("/api/bookings", bookingRouter);
 app.use("/api/feedbacks", feedbackRouter);
+
+// Health check route (useful for Render to keep server alive)
+app.get("/", (req, res) => {
+  res.status(200).json({ message: "Server is running" });
+});
 
 // Fallback route for unknown endpoints
 app.use((req, res) => {

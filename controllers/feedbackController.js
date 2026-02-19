@@ -12,7 +12,6 @@ export async function createFeedback(req, res) {
 
     const { bookingId, rating, comment } = req.body;
 
-    // Check booking exists & belongs to user
     const booking = await Booking.findOne({
       bookingId,
       email: req.user.email,
@@ -22,7 +21,6 @@ export async function createFeedback(req, res) {
       return res.status(404).json({ message: "Booking not found or not authorized" });
     }
 
-    // Prevent duplicate feedback
     const existingFeedback = await Feedback.findOne({ bookingId });
     if (existingFeedback) {
       return res.status(400).json({ message: "Feedback already submitted for this booking" });
@@ -40,6 +38,21 @@ export async function createFeedback(req, res) {
     return res.status(201).json({ message: "Feedback submitted successfully", result });
   } catch (err) {
     return res.status(500).json({ message: "Failed to submit feedback", error: err.message || err });
+  }
+}
+
+/**
+ * Get PUBLIC visible feedbacks (no auth required — for homepage testimonials)
+ */
+export async function getPublicFeedbacks(req, res) {
+  try {
+    const feedbacks = await Feedback.find({ status: "Visible" })
+      .select("comment rating email status createdAt")
+      .sort({ createdAt: -1 })
+      .limit(20);
+    return res.status(200).json({ message: "Public Feedbacks", result: feedbacks });
+  } catch (err) {
+    return res.status(500).json({ message: "Failed to get feedbacks", error: err.message || err });
   }
 }
 

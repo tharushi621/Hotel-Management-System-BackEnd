@@ -11,8 +11,6 @@ import { protect } from "../middleware/authMiddleware.js";
 
 const feedbackRouter = express.Router();
 
-// PUBLIC route — no auth needed (for homepage testimonials)
-// Must be defined BEFORE the protected GET "/" to avoid conflict
 feedbackRouter.get("/public", getPublicFeedbacks);
 
 // Customer routes (requires login)

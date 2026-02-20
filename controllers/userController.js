@@ -3,9 +3,11 @@ import Otp from "../models/otp.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import dotenv from "dotenv";
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
 dotenv.config();
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 //Send OTP email
 export async function sendOtpEmail(email, otp) {
@@ -15,19 +17,9 @@ export async function sendOtpEmail(email, otp) {
   }
 
   console.log("Attempting to send OTP email to:", email);
-  console.log("Using EMAIL:", process.env.EMAIL);
-  console.log("EMAIL_PASS set:", !!process.env.EMAIL_PASS);
 
-  const transport = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: process.env.EMAIL,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
-
-  const message = {
-    from: `"Leonine Villa" <${process.env.EMAIL}>`,
+  const { data, error } = await resend.emails.send({
+    from: "Leonine Villa <onboarding@resend.dev>",
     to: email,
     subject: "Your Leonine Villa Verification Code",
     html: `
@@ -44,10 +36,14 @@ export async function sendOtpEmail(email, otp) {
         <p style="color: #8b6030; font-size: 0.75rem; text-align: center;">Leonine Villa Natura Resort · Sri Lanka</p>
       </div>
     `,
-  };
+  });
 
-  const info = await transport.sendMail(message);
-  console.log("OTP email sent successfully:", info.response);
+  if (error) {
+    console.error("Resend error:", error);
+    throw new Error(error.message);
+  }
+
+  console.log("OTP email sent successfully. ID:", data.id);
 }
 
 //Post User
@@ -97,7 +93,6 @@ export async function postUsers(req, res) {
     const newOtp = new Otp({ email, otp });
     await newOtp.save();
 
-    // Await email so errors are visible in logs
     try {
       await sendOtpEmail(email, otp);
     } catch (emailErr) {
@@ -327,8 +322,8 @@ export async function deleteUserById(req, res) {
 // Temporary test route helper — call via GET /api/users/test-email
 export async function testEmail(req, res) {
   try {
-    await sendOtpEmail(process.env.EMAIL, 9999);
-    res.json({ message: "Test email sent successfully to " + process.env.EMAIL });
+    await sendOtpEmail(process.env.RESEND_TEST_EMAIL || process.env.EMAIL, 9999);
+    res.json({ message: "Test email sent successfully" });
   } catch (err) {
     res.status(500).json({ message: "Test email failed", error: err.message });
   }

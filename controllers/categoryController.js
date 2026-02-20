@@ -1,7 +1,7 @@
 import Category from "../models/categories.js";
 import { isAdminValid } from "./userController.js";
 
-//Create Category
+// Create Category
 export async function createCategory(req, res) {
   if (!isAdminValid(req)) return res.status(403).json({ message: "Forbidden" });
 
@@ -16,7 +16,7 @@ export async function createCategory(req, res) {
   }
 }
 
-//Delete Category
+// Delete Category
 export async function deleteCategory(req, res) {
   if (!isAdminValid(req)) return res.status(403).json({ message: "Forbidden" });
 
@@ -33,7 +33,7 @@ export async function deleteCategory(req, res) {
   }
 }
 
-//Get all categories
+// Get all categories
 export async function getCategories(req, res) {
   try {
     const result = await Category.find().select("-__v");
@@ -45,11 +45,11 @@ export async function getCategories(req, res) {
   }
 }
 
-//Get Category By Name
+// Get Category By Name
 export async function getCategoryByName(req, res) {
   try {
     const result = await Category.findOne({ name: req.params.name }).select(
-      "-__v",
+      "-__v"
     );
     if (!result) return res.status(404).json({ message: "Category not found" });
 
@@ -61,7 +61,7 @@ export async function getCategoryByName(req, res) {
   }
 }
 
-//Update Category
+// Update Category by MongoDB _id
 export async function updateCategory(req, res) {
   if (!isAdminValid(req)) return res.status(403).json({ message: "Forbidden" });
 
@@ -69,6 +69,28 @@ export async function updateCategory(req, res) {
     const updated = await Category.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
     }).select("-__v");
+    if (!updated)
+      return res.status(404).json({ message: "Category not found" });
+
+    res.json({ message: "Category updated successfully", result: updated });
+  } catch (err) {
+    res
+      .status(500)
+      .json({ message: "Category update failed", error: err.message });
+  }
+}
+
+// Update Category by Name (used by frontend UpdateCategoryForm)
+export async function updateCategoryByName(req, res) {
+  if (!isAdminValid(req)) return res.status(403).json({ message: "Forbidden" });
+
+  try {
+    const updated = await Category.findOneAndUpdate(
+      { name: req.params.name },
+      req.body,
+      { new: true }
+    ).select("-__v");
+
     if (!updated)
       return res.status(404).json({ message: "Category not found" });
 

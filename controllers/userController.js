@@ -179,7 +179,30 @@ export async function verifyUserEmail(req, res) {
       .json({ message: "Email verification failed", error: err.message });
   }
 }
+// Add this to userController.js
+export async function resendOtp(req, res) {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ message: "Email is required" });
 
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Delete old OTPs for this email
+    await Otp.deleteMany({ email });
+
+    const otp = Math.floor(1000 + Math.random() * 9000);
+    const newOtp = new Otp({ email, otp });
+    await newOtp.save();
+
+    await sendOtpEmail(email, otp);
+
+    res.status(200).json({ message: "OTP resent successfully" });
+  } catch (err) {
+    console.error("Resend OTP error:", err);
+    res.status(500).json({ message: "Failed to resend OTP", error: err.message });
+  }
+}
 //Disable/enable user
 export async function disableUser(req, res) {
   if (!isAdminValid(req)) return res.status(403).json({ message: "Forbidden" });

@@ -15,20 +15,21 @@ dotenv.config();
 
 const app = express();
 
-// Dynamic CORS: allows Vercel production + all Vercel preview deployments for this project
+// Hardcoded + env var fallback — .filter(Boolean) removes undefined if env var is missing
+const allowedOrigins = [
+  "https://hotel-management-system-front-end.vercel.app",
+  process.env.HOSTLINK,
+].filter(Boolean);
+
 const corsOptions = {
   origin: function (origin, callback) {
-    const allowedOrigins = [
-      process.env.HOSTLINK, // https://hotel-management-system-front-end.vercel.app
-    ];
-
-    // Allow requests with no origin (Postman, server-to-server, curl)
+    // Allow requests with no origin (Postman, curl, server-to-server)
     if (!origin) return callback(null, true);
 
-    // Allow exact matches
+    // Allow exact match
     if (allowedOrigins.includes(origin)) return callback(null, true);
 
-    // Allow any Vercel preview deployment URL for this project
+    // Allow any Vercel preview deployment for this project
     if (
       origin.endsWith(".vercel.app") &&
       origin.includes("hotel-management-system")
@@ -37,14 +38,17 @@ const corsOptions = {
     }
 
     // Block everything else
-    callback(new Error("Not allowed by CORS: " + origin));
+    return callback(new Error("Not allowed by CORS: " + origin));
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
 };
 
+// CORS must be first — before any routes or body parser
 app.use(cors(corsOptions));
+
+// Handle all preflight OPTIONS requests immediately
 app.options("*", cors(corsOptions));
 
 app.use(express.json());
@@ -70,6 +74,12 @@ app.get("/", (req, res) => {
 // 404 Fallback
 app.use((req, res) => {
   res.status(404).json({ message: "Endpoint not found" });
+});
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error("Server error:", err.message);
+  res.status(500).json({ message: "Internal server error", error: err.message });
 });
 
 const PORT = process.env.PORT || 5000;

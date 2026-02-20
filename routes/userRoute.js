@@ -8,7 +8,8 @@ import {
   disableUser,
   changeUserType,
   verifyUserEmail,
-  resendOtp
+  resendOtp,
+  testEmail,
 } from "../controllers/userController.js";
 import { protect } from "../middleware/authMiddleware.js";
 
@@ -24,7 +25,10 @@ userRouter.patch("/type/:userId", protect, changeUserType);
 userRouter.post("/register", postUsers);
 userRouter.post("/login", loginUser);
 userRouter.post("/verify-email", verifyUserEmail);
-userRouter.post("/resend-otp", resendOtp);  // ← added
+userRouter.post("/resend-otp", resendOtp);
 userRouter.get("/me", protect, getUser);
+
+// Temporary — remove after confirming email works
+userRouter.get("/test-email", testEmail);
 
 export default userRouter;

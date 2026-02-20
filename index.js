@@ -15,14 +15,34 @@ dotenv.config();
 
 const app = express();
 
+// ✅ UPDATED: Dynamic CORS origin to support Vercel preview deployments
 const corsOptions = {
-  origin: [
-    process.env.HOSTLINK,
-    process.env.BE
-  ],
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+      process.env.HOSTLINK, // e.g. https://hotel-management-system-front-end.vercel.app
+      process.env.BE,       // e.g. https://hotel-management-system-be-gcfq.onrender.com
+    ];
+
+    // Allow requests with no origin (e.g. Postman, server-to-server)
+    if (!origin) return callback(null, true);
+
+    // Allow exact matches
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+
+    // Allow any Vercel preview deployment URL for this project
+    if (
+      origin.endsWith(".vercel.app") &&
+      origin.includes("hotel-management-system")
+    ) {
+      return callback(null, true);
+    }
+
+    // Block everything else
+    callback(new Error("Not allowed by CORS: " + origin));
+  },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"]
+  allowedHeaders: ["Content-Type", "Authorization"],
 };
 
 app.use(cors(corsOptions));

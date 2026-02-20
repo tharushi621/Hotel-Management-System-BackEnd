@@ -1,5 +1,6 @@
 import Booking from "../models/booking.js";
 import Room from "../models/room.js";
+import { sendBookingConfirmationEmail } from "./userController.js";
 
 // Helper: generate unique bookingId using timestamp + random suffix
 function generateBookingId() {
@@ -11,7 +12,7 @@ export async function createBooking(req, res) {
   try {
     if (!req.user) return res.status(401).json({ message: "Unauthorized" });
 
-    const { roomId, start, end, notes } = req.body;
+    const { roomId, start, end, notes, guestEmail } = req.body;
     const s = new Date(start);
     const e = new Date(end);
 
@@ -43,6 +44,17 @@ export async function createBooking(req, res) {
     });
 
     const result = await newBooking.save();
+
+    // Send booking confirmation to the guest email from the form,
+    // falling back to the logged-in account email if not provided
+    const confirmationEmail = guestEmail || req.user.email;
+    try {
+      await sendBookingConfirmationEmail(confirmationEmail, result);
+    } catch (emailErr) {
+      // Log the error but don't fail the booking response
+      console.error("Booking confirmation email failed:", emailErr.message);
+    }
+
     return res.status(201).json({ message: "Booking created", result });
   } catch (err) {
     return res.status(500).json({ message: "Booking creation failed", error: err.message });
@@ -54,7 +66,7 @@ export async function createBookingUsingCategory(req, res) {
   try {
     if (!req.user) return res.status(401).json({ message: "Unauthorized" });
 
-    const { category, start, end, notes } = req.body;
+    const { category, start, end, notes, guestEmail } = req.body;
     const s = new Date(start);
     const e = new Date(end);
 
@@ -89,6 +101,17 @@ export async function createBookingUsingCategory(req, res) {
     });
 
     const result = await newBooking.save();
+
+    // Send booking confirmation to the guest email from the form,
+    // falling back to the logged-in account email if not provided
+    const confirmationEmail = guestEmail || req.user.email;
+    try {
+      await sendBookingConfirmationEmail(confirmationEmail, result);
+    } catch (emailErr) {
+      // Log the error but don't fail the booking response
+      console.error("Booking confirmation email failed:", emailErr.message);
+    }
+
     return res.status(201).json({ message: "Booking created", result });
   } catch (err) {
     return res.status(500).json({ message: "Booking creation failed", error: err.message });

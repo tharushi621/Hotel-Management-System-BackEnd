@@ -7,6 +7,49 @@ import nodemailer from "nodemailer";
 
 dotenv.config();
 
+//Send OTP email
+export async function sendOtpEmail(email, otp) {
+  if (!email) {
+    console.log("No email provided, skipping OTP email");
+    return;
+  }
+
+  console.log("Attempting to send OTP email to:", email);
+  console.log("Using EMAIL:", process.env.EMAIL);
+  console.log("EMAIL_PASS set:", !!process.env.EMAIL_PASS);
+
+  const transport = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: process.env.EMAIL,
+      pass: process.env.EMAIL_PASS,
+    },
+  });
+
+  const message = {
+    from: `"Leonine Villa" <${process.env.EMAIL}>`,
+    to: email,
+    subject: "Your Leonine Villa Verification Code",
+    html: `
+      <div style="font-family: Georgia, serif; max-width: 480px; margin: 0 auto; padding: 32px; background: #f7e8c8; border: 1px solid #d4b888;">
+        <h2 style="color: #2c1810; text-align: center; font-size: 1.4rem;">Leonine Villa Natura Resort</h2>
+        <hr style="border-color: #b8860b; margin: 16px 0;" />
+        <p style="color: #5a3e2b; font-style: italic;">Dear Esteemed Guest,</p>
+        <p style="color: #2c1810;">Your verification code is:</p>
+        <div style="text-align: center; margin: 24px 0;">
+          <span style="font-size: 2.5rem; font-weight: bold; color: #8b1a1a; letter-spacing: 0.4em;">${otp}</span>
+        </div>
+        <p style="color: #5a3e2b; font-size: 0.85rem;">This code is valid for a limited time. Do not share it with anyone.</p>
+        <hr style="border-color: #b8860b; margin: 16px 0;" />
+        <p style="color: #8b6030; font-size: 0.75rem; text-align: center;">Leonine Villa Natura Resort · Sri Lanka</p>
+      </div>
+    `,
+  };
+
+  const info = await transport.sendMail(message);
+  console.log("OTP email sent successfully:", info.response);
+}
+
 //Post User
 export async function postUsers(req, res) {
   try {
@@ -54,9 +97,12 @@ export async function postUsers(req, res) {
     const newOtp = new Otp({ email, otp });
     await newOtp.save();
 
-    sendOtpEmail(email, otp).catch((err) =>
-      console.error("OTP email send failed (non-fatal):", err),
-    );
+    // Await email so errors are visible in logs
+    try {
+      await sendOtpEmail(email, otp);
+    } catch (emailErr) {
+      console.error("OTP email failed:", emailErr.message);
+    }
 
     res
       .status(201)
@@ -94,6 +140,13 @@ export async function loginUser(req, res) {
     if (!isPasswordValid)
       return res.status(403).json({ message: "Incorrect password" });
 
+    if (!user.emailVerified) {
+      return res.status(403).json({
+        message:
+          "Your email is not yet verified. Please confirm your OTP before signing in.",
+      });
+    }
+
     const payload = {
       id: user._id,
       email: user.email,
@@ -129,29 +182,6 @@ export function getUser(req, res) {
   res.status(200).json({ message: "User found", user: req.user });
 }
 
-//Send OTP email
-export async function sendOtpEmail(email, otp) {
-  if (!email) {
-    console.log("No email provided, skipping OTP email");
-    return;
-  }
-
-  const transport = nodemailer.createTransport({
-    service: "gmail",
-    auth: { user: process.env.EMAIL, pass: process.env.EMAIL_PASS },
-  });
-
-  const message = {
-    from: process.env.EMAIL,
-    to: email,
-    subject: "Your Villa Natura OTP Code",
-    text: `Your OTP verification code is: ${otp}\n\nThis code is valid for a limited time. Do not share it with anyone.`,
-  };
-
-  const info = await transport.sendMail(message);
-  console.log("OTP email sent:", info.response);
-}
-
 //Verify user email
 export async function verifyUserEmail(req, res) {
   try {
@@ -160,7 +190,7 @@ export async function verifyUserEmail(req, res) {
     if (!email || !otp)
       return res.status(400).json({ message: "Email and OTP are required" });
 
-    const otpRecord = await Otp.findOne({ email }).sort({ date: -1 });
+    const otpRecord = await Otp.findOne({ email }).sort({ createdAt: -1 });
 
     if (!otpRecord)
       return res.status(400).json({ message: "OTP is invalid or expired" });
@@ -179,7 +209,8 @@ export async function verifyUserEmail(req, res) {
       .json({ message: "Email verification failed", error: err.message });
   }
 }
-// Add this to userController.js
+
+//Resend OTP
 export async function resendOtp(req, res) {
   try {
     const { email } = req.body;
@@ -188,7 +219,10 @@ export async function resendOtp(req, res) {
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    // Delete old OTPs for this email
+    if (user.emailVerified) {
+      return res.status(400).json({ message: "Email is already verified." });
+    }
+
     await Otp.deleteMany({ email });
 
     const otp = Math.floor(1000 + Math.random() * 9000);
@@ -200,9 +234,12 @@ export async function resendOtp(req, res) {
     res.status(200).json({ message: "OTP resent successfully" });
   } catch (err) {
     console.error("Resend OTP error:", err);
-    res.status(500).json({ message: "Failed to resend OTP", error: err.message });
+    res
+      .status(500)
+      .json({ message: "Failed to resend OTP", error: err.message });
   }
 }
+
 //Disable/enable user
 export async function disableUser(req, res) {
   if (!isAdminValid(req)) return res.status(403).json({ message: "Forbidden" });
@@ -244,7 +281,6 @@ export async function getAllUsers(req, res) {
   }
 
   try {
-    // ✅ FIX: Use only req.query (GET requests don't have a reliable body)
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
@@ -285,5 +321,15 @@ export async function deleteUserById(req, res) {
     res.json({ message: "User deleted successfully" });
   } catch (err) {
     res.status(500).json({ message: "User delete failed", error: err.message });
+  }
+}
+
+// Temporary test route helper — call via GET /api/users/test-email
+export async function testEmail(req, res) {
+  try {
+    await sendOtpEmail(process.env.EMAIL, 9999);
+    res.json({ message: "Test email sent successfully to " + process.env.EMAIL });
+  } catch (err) {
+    res.status(500).json({ message: "Test email failed", error: err.message });
   }
 }

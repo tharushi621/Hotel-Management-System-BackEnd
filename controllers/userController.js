@@ -43,7 +43,7 @@ export async function postUsers(req, res) {
       password: passwordHash,
       phone,
       whatsApp,
-      type: type || "user", 
+      type: type || "user",
       disabled: false,
       emailVerified: false,
     });
@@ -74,7 +74,7 @@ export async function postUsers(req, res) {
   }
 }
 
-//login user
+//Login user
 export async function loginUser(req, res) {
   try {
     const { email, password } = req.body;
@@ -212,7 +212,7 @@ export async function changeUserType(req, res) {
   }
 }
 
-///Get all users (Pagination)
+// Get all users (Pagination) - Admin only
 export async function getAllUsers(req, res) {
   if (!isAdminValid(req)) {
     return res
@@ -221,8 +221,9 @@ export async function getAllUsers(req, res) {
   }
 
   try {
-    const page = parseInt(req.body.page || req.query.page) || 1;
-    const limit = parseInt(req.body.limit || req.query.limit) || 10;
+    // ✅ FIX: Use only req.query (GET requests don't have a reliable body)
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
     const totalUsers = await User.countDocuments();

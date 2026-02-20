@@ -3,11 +3,21 @@ import Otp from "../models/otp.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import dotenv from "dotenv";
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 
 dotenv.config();
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// ─── Nodemailer transporter (Gmail + App Password) ────────────────────────────
+// In your .env set:
+//   EMAIL=youraddress@gmail.com
+//   EMAIL_PASS=xxxx xxxx xxxx xxxx   ← 16-char Gmail App Password
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL,
+    pass: process.env.EMAIL_PASS,
+  },
+});
 
 // ─── Send OTP email ───────────────────────────────────────────────────────────
 export async function sendOtpEmail(email, otp) {
@@ -18,8 +28,8 @@ export async function sendOtpEmail(email, otp) {
 
   console.log("Attempting to send OTP email to:", email);
 
-  const { data, error } = await resend.emails.send({
-    from: "Leonine Villa <onboarding@resend.dev>",
+  await transporter.sendMail({
+    from: `"Leonine Villa" <${process.env.EMAIL}>`,
     to: email,
     subject: "Your Leonine Villa Verification Code",
     html: `
@@ -38,12 +48,7 @@ export async function sendOtpEmail(email, otp) {
     `,
   });
 
-  if (error) {
-    console.error("Resend error:", error);
-    throw new Error(error.message);
-  }
-
-  console.log("OTP email sent successfully. ID:", data.id);
+  console.log("OTP email sent successfully to:", email);
 }
 
 // ─── Send booking confirmation email ─────────────────────────────────────────
@@ -64,8 +69,8 @@ export async function sendBookingConfirmationEmail(toEmail, booking) {
 
   console.log("Sending booking confirmation to:", toEmail);
 
-  const { data, error } = await resend.emails.send({
-    from: "Leonine Villa <onboarding@resend.dev>",
+  await transporter.sendMail({
+    from: `"Leonine Villa" <${process.env.EMAIL}>`,
     to: toEmail,
     subject: `Your Leonine Villa Reservation — Ref. #${bookingId}`,
     html: `
@@ -85,7 +90,6 @@ export async function sendBookingConfirmationEmail(toEmail, booking) {
           Below are the particulars of your reservation:
         </p>
 
-        <!-- Booking details table -->
         <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px; font-size: 0.9rem;">
           <tr style="background: #ecd9a8;">
             <td colspan="2" style="padding: 10px 14px; color: #2c1810; font-weight: bold; font-size: 0.78rem; letter-spacing: 0.1em; text-transform: uppercase;">
@@ -122,7 +126,6 @@ export async function sendBookingConfirmationEmail(toEmail, booking) {
           }
         </table>
 
-        <!-- Policy note -->
         <div style="background: #ecd9a822; border-left: 3px solid #b8860b; padding: 14px 16px; margin-bottom: 20px;">
           <p style="color: #5a3e2b; font-style: italic; font-size: 0.82rem; line-height: 1.75; margin: 0;">
             A deposit of <strong>30%</strong> will be requested upon confirmation of your reservation.<br/>
@@ -147,12 +150,7 @@ export async function sendBookingConfirmationEmail(toEmail, booking) {
     `,
   });
 
-  if (error) {
-    console.error("Booking confirmation email error:", error);
-    throw new Error(error.message);
-  }
-
-  console.log("Booking confirmation email sent. ID:", data.id);
+  console.log("Booking confirmation email sent to:", toEmail);
 }
 
 // ─── Post User ────────────────────────────────────────────────────────────────
@@ -431,7 +429,7 @@ export async function deleteUserById(req, res) {
 // ─── Test email helper ────────────────────────────────────────────────────────
 export async function testEmail(req, res) {
   try {
-    await sendOtpEmail(process.env.RESEND_TEST_EMAIL || process.env.EMAIL, 9999);
+    await sendOtpEmail(process.env.EMAIL, 9999);
     res.json({ message: "Test email sent successfully" });
   } catch (err) {
     res.status(500).json({ message: "Test email failed", error: err.message });

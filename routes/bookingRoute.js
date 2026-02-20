@@ -1,22 +1,24 @@
 import express from "express";
 import {
-  getAllBookings,
   createBooking,
+  createBookingUsingCategory,
+  getAllBookings,
   deleteBooking,
   retrieveBookingByDate,
-  createBookingUsingCategory,
+  updateBooking,
 } from "../controllers/bookingController.js";
 import { protect } from "../middleware/authMiddleware.js";
 
 const bookingRouter = express.Router();
 
-// Protected routes (login required)
+// Admin Routes
 bookingRouter.get("/", protect, getAllBookings);
-bookingRouter.post("/", protect, createBooking);
-bookingRouter.post("/create-by-category", protect, createBookingUsingCategory);
-bookingRouter.post("/filter-date", protect, retrieveBookingByDate);
-
-// Admin-only routes
 bookingRouter.delete("/:id", protect, deleteBooking);
+bookingRouter.patch("/:bookingId", protect, updateBooking); // ✅ NEW: update booking (admin)
+
+// Customer Routes
+bookingRouter.post("/", protect, createBooking);
+bookingRouter.post("/category", protect, createBookingUsingCategory);
+bookingRouter.post("/filter", protect, retrieveBookingByDate);
 
 export default bookingRouter;

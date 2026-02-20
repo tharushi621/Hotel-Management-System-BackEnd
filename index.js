@@ -15,24 +15,20 @@ dotenv.config();
 
 const app = express();
 
-// CORS — must be before all routes
 app.use(cors({
   origin: [
-    "https://hotel-management-system-front-end.vercel.app",
-    "http://localhost:5173"
+    process.env.HOSTLINK,
+    process.env.BE
   ],
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
-// Handle preflight requests for all routes
 app.options("*", cors());
 
-// Body parser
 app.use(express.json());
 
-// MongoDB connection
 const connectionString = process.env.MONGO_URL;
 
 mongoose

@@ -15,15 +15,14 @@ dotenv.config();
 
 const app = express();
 
-// ✅ UPDATED: Dynamic CORS origin to support Vercel preview deployments
+// Dynamic CORS: allows Vercel production + all Vercel preview deployments for this project
 const corsOptions = {
   origin: function (origin, callback) {
     const allowedOrigins = [
-      process.env.HOSTLINK, // e.g. https://hotel-management-system-front-end.vercel.app
-      process.env.BE,       // e.g. https://hotel-management-system-be-gcfq.onrender.com
+      process.env.HOSTLINK, // https://hotel-management-system-front-end.vercel.app
     ];
 
-    // Allow requests with no origin (e.g. Postman, server-to-server)
+    // Allow requests with no origin (Postman, server-to-server, curl)
     if (!origin) return callback(null, true);
 
     // Allow exact matches
@@ -50,10 +49,8 @@ app.options("*", cors(corsOptions));
 
 app.use(express.json());
 
-const connectionString = process.env.MONGO_URL;
-
 mongoose
-  .connect(connectionString)
+  .connect(process.env.MONGO_URL)
   .then(() => console.log("Connected to the database"))
   .catch((err) => console.error("MongoDB connection failed:", err.message));
 
@@ -70,7 +67,7 @@ app.get("/", (req, res) => {
   res.status(200).json({ message: "Server is running" });
 });
 
-// Fallback
+// 404 Fallback
 app.use((req, res) => {
   res.status(404).json({ message: "Endpoint not found" });
 });

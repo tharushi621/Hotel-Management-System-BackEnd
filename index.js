@@ -15,7 +15,7 @@ dotenv.config();
 
 const app = express();
 
-app.use(cors({
+const corsOptions = {
   origin: [
     process.env.HOSTLINK,
     process.env.BE
@@ -23,9 +23,10 @@ app.use(cors({
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
-}));
+};
 
-app.options("*", cors());
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 
 app.use(express.json());
 
@@ -44,17 +45,16 @@ app.use("/api/rooms", roomRouter);
 app.use("/api/bookings", bookingRouter);
 app.use("/api/feedbacks", feedbackRouter);
 
-// Health check route (useful for Render to keep server alive)
+// Health check
 app.get("/", (req, res) => {
   res.status(200).json({ message: "Server is running" });
 });
 
-// Fallback route for unknown endpoints
+// Fallback
 app.use((req, res) => {
   res.status(404).json({ message: "Endpoint not found" });
 });
 
-// Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}.`);

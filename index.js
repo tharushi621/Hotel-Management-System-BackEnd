@@ -7,8 +7,8 @@ import cors from "cors";
 import userRouter from "./routes/userRoute.js";
 import galleryItemRouter from "./routes/galleryItemRoute.js";
 import categoryRouter from "./routes/categoryRoute.js";
+import bookingRouter from "./routes/bookingRoute.js"
 import roomRouter from "./routes/roomRoute.js";
-import bookingRouter from "./routes/bookingRoute.js";
 import feedbackRouter from "./routes/feedbackRouter.js";
 
 dotenv.config();

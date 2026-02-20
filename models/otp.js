@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 const otpSchema = mongoose.Schema({
   email: {
     type: String,
-    requires: true,
+    required: true, // ✅ FIX: Was "requires: true" (typo)
   },
   otp: {
     type: Number,
@@ -14,5 +14,6 @@ const otpSchema = mongoose.Schema({
     default: Date.now,
   },
 });
+
 const Otp = mongoose.model("otp", otpSchema);
 export default Otp;

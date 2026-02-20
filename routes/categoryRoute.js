@@ -6,6 +6,7 @@ import {
   getCategoryByName,
   updateCategory,
 } from "../controllers/categoryController.js";
+import { protect } from "../middleware/authMiddleware.js";
 
 const categoryRouter = express.Router();
 
@@ -13,9 +14,9 @@ const categoryRouter = express.Router();
 categoryRouter.get("/", getCategories);
 categoryRouter.get("/:name", getCategoryByName);
 
-// Admin-protected
-categoryRouter.post("/", createCategory);
-categoryRouter.put("/:id", updateCategory);
-categoryRouter.delete("/:id", deleteCategory);
+// Admin-protected ✅ FIX: Added protect middleware to all mutation routes
+categoryRouter.post("/", protect, createCategory);
+categoryRouter.put("/:id", protect, updateCategory);
+categoryRouter.delete("/:id", protect, deleteCategory);
 
 export default categoryRouter;

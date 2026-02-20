@@ -138,7 +138,7 @@ export async function sendOtpEmail(email, otp) {
 
   const transport = nodemailer.createTransport({
     service: "gmail",
-    auth: { user: process.env.EMAIL, pass: process.env.PASSWORD },
+    auth: { user: process.env.EMAIL, pass: process.env.EMAIL_PASS },
   });
 
   const message = {

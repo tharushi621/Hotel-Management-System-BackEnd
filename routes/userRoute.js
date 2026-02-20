@@ -8,6 +8,7 @@ import {
   disableUser,
   changeUserType,
   verifyUserEmail,
+  resendOtp
 } from "../controllers/userController.js";
 import { protect } from "../middleware/authMiddleware.js";
 
@@ -18,10 +19,12 @@ userRouter.get("/all", protect, getAllUsers);
 userRouter.delete("/delete/:id", protect, deleteUserById);
 userRouter.patch("/disable/:userId", protect, disableUser);
 userRouter.patch("/type/:userId", protect, changeUserType);
+
 //Public / User Routes
 userRouter.post("/register", postUsers);
 userRouter.post("/login", loginUser);
 userRouter.post("/verify-email", verifyUserEmail);
+userRouter.post("/resend-otp", resendOtp);  // ← added
 userRouter.get("/me", protect, getUser);
 
 export default userRouter;

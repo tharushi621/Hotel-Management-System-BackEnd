@@ -1,9 +1,12 @@
 import Booking from "../models/booking.js";
 import Room from "../models/room.js";
+import { randomUUID } from "crypto";
 
-// Helper: generate unique bookingId
+// Helper: generate unique bookingId using timestamp + random suffix to avoid collisions
 function generateBookingId() {
-  return Date.now();
+  // ✅ FIX: Date.now() alone risks collision under simultaneous requests
+  // Combine timestamp with a random 4-digit suffix for safety
+  return parseInt(`${Date.now()}${Math.floor(1000 + Math.random() * 9000)}`);
 }
 
 // Create booking by room
@@ -157,9 +160,14 @@ export async function retrieveBookingByDate(req, res) {
     if (isNaN(s) || isNaN(e) || e <= s)
       return res.status(400).json({ message: "Invalid date range" });
 
+    // ✅ FIX: Customers only see their own bookings; admins see all
+    const emailFilter =
+      req.user.type === "admin" ? {} : { email: req.user.email };
+
     const result = await Booking.find({
       start: { $lt: e },
       end: { $gt: s },
+      ...emailFilter,
     });
 
     return res.status(200).json({ message: "Filtered bookings", result });

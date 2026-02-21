@@ -2,12 +2,12 @@ import Booking from "../models/booking.js";
 import Room from "../models/room.js";
 import { sendBookingConfirmationEmail } from "./userController.js";
 
-// Helper: generate unique bookingId using timestamp + random suffix
+// Helper: generate unique bookingId
 function generateBookingId() {
   return parseInt(`${Date.now()}${Math.floor(1000 + Math.random() * 9000)}`);
 }
 
-// Create booking by room
+// ─── Create Booking by Room ID ────────────────────────────────────────────────
 export async function createBooking(req, res) {
   try {
     if (!req.user) return res.status(401).json({ message: "Unauthorized" });
@@ -29,7 +29,6 @@ export async function createBooking(req, res) {
       start: { $lt: e },
       end: { $gt: s },
     });
-
     if (overlapping)
       return res.status(409).json({ message: "Room is already booked in this time range" });
 
@@ -45,23 +44,22 @@ export async function createBooking(req, res) {
 
     const result = await newBooking.save();
 
-    // Send booking confirmation to the guest email from the form,
-    // falling back to the logged-in account email if not provided
-    const confirmationEmail = guestEmail || req.user.email;
-    try {
-      await sendBookingConfirmationEmail(confirmationEmail, result);
-    } catch (emailErr) {
-      // Log the error but don't fail the booking response
-      console.error("Booking confirmation email failed:", emailErr.message);
-    }
+    // ✅ Respond to client IMMEDIATELY — no waiting for email
+    res.status(201).json({ message: "Booking created", result });
 
-    return res.status(201).json({ message: "Booking created", result });
+    // ✅ Send confirmation email in background after response
+    const confirmTo = guestEmail || req.user.email;
+    sendBookingConfirmationEmail(confirmTo, result).catch((err) => {
+      console.error(`❌ Booking confirmation email failed for ${confirmTo}:`, err.message);
+    });
+
   } catch (err) {
-    return res.status(500).json({ message: "Booking creation failed", error: err.message });
+    console.error("Create booking error:", err);
+    res.status(500).json({ message: "Booking creation failed", error: err.message });
   }
 }
 
-// Create booking by category
+// ─── Create Booking by Category ───────────────────────────────────────────────
 export async function createBookingUsingCategory(req, res) {
   try {
     if (!req.user) return res.status(401).json({ message: "Unauthorized" });
@@ -87,7 +85,8 @@ export async function createBookingUsingCategory(req, res) {
 
     if (!availableRooms.length)
       return res.status(409).json({
-        message: "No rooms available for the selected category and dates. Please try different dates.",
+        message:
+          "No rooms available for the selected category and dates. Please try different dates.",
       });
 
     const newBooking = new Booking({
@@ -102,23 +101,22 @@ export async function createBookingUsingCategory(req, res) {
 
     const result = await newBooking.save();
 
-    // Send booking confirmation to the guest email from the form,
-    // falling back to the logged-in account email if not provided
-    const confirmationEmail = guestEmail || req.user.email;
-    try {
-      await sendBookingConfirmationEmail(confirmationEmail, result);
-    } catch (emailErr) {
-      // Log the error but don't fail the booking response
-      console.error("Booking confirmation email failed:", emailErr.message);
-    }
+    // ✅ Respond to client IMMEDIATELY — no waiting for email
+    res.status(201).json({ message: "Booking created", result });
 
-    return res.status(201).json({ message: "Booking created", result });
+    // ✅ Send confirmation email in background after response
+    const confirmTo = guestEmail || req.user.email;
+    sendBookingConfirmationEmail(confirmTo, result).catch((err) => {
+      console.error(`❌ Booking confirmation email failed for ${confirmTo}:`, err.message);
+    });
+
   } catch (err) {
-    return res.status(500).json({ message: "Booking creation failed", error: err.message });
+    console.error("Create booking by category error:", err);
+    res.status(500).json({ message: "Booking creation failed", error: err.message });
   }
 }
 
-// Get all bookings (admin only)
+// ─── Get All Bookings (Admin) ─────────────────────────────────────────────────
 export async function getAllBookings(req, res) {
   try {
     if (!req.user) return res.status(401).json({ message: "Please login" });
@@ -132,7 +130,7 @@ export async function getAllBookings(req, res) {
   }
 }
 
-// Delete booking by bookingId (admin only)
+// ─── Delete Booking (Admin) ───────────────────────────────────────────────────
 export async function deleteBooking(req, res) {
   try {
     if (!req.user) return res.status(401).json({ message: "Please login" });
@@ -149,7 +147,7 @@ export async function deleteBooking(req, res) {
   }
 }
 
-// Update booking (admin only)
+// ─── Update Booking (Admin) ───────────────────────────────────────────────────
 export async function updateBooking(req, res) {
   try {
     if (!req.user) return res.status(401).json({ message: "Please login" });
@@ -159,7 +157,6 @@ export async function updateBooking(req, res) {
     const bookingId = Number(req.params.bookingId);
     const { status, notes, start, end, reason } = req.body;
 
-    // Build update object with only provided fields
     const updateData = {};
     if (status !== undefined) updateData.status = status;
     if (notes !== undefined) updateData.notes = notes;
@@ -175,17 +172,10 @@ export async function updateBooking(req, res) {
       if (isNaN(e)) return res.status(400).json({ message: "Invalid end date" });
       updateData.end = e;
     }
-
-    // If both dates are provided, validate range
     if (updateData.start && updateData.end && updateData.end <= updateData.start)
       return res.status(400).json({ message: "End date must be after start date" });
 
-    const updated = await Booking.findOneAndUpdate(
-      { bookingId },
-      updateData,
-      { new: true }
-    );
-
+    const updated = await Booking.findOneAndUpdate({ bookingId }, updateData, { new: true });
     if (!updated) return res.status(404).json({ message: "Booking not found" });
 
     return res.status(200).json({ message: "Booking updated", result: updated });
@@ -194,7 +184,7 @@ export async function updateBooking(req, res) {
   }
 }
 
-// Retrieve bookings by date range
+// ─── Filter Bookings by Date Range ───────────────────────────────────────────
 export async function retrieveBookingByDate(req, res) {
   try {
     if (!req.user) return res.status(401).json({ message: "Please login" });
@@ -205,8 +195,7 @@ export async function retrieveBookingByDate(req, res) {
     if (isNaN(s) || isNaN(e) || e <= s)
       return res.status(400).json({ message: "Invalid date range" });
 
-    const emailFilter =
-      req.user.type === "admin" ? {} : { email: req.user.email };
+    const emailFilter = req.user.type === "admin" ? {} : { email: req.user.email };
 
     const result = await Booking.find({
       start: { $lt: e },

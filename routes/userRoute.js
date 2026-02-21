@@ -27,8 +27,4 @@ userRouter.post("/login", loginUser);
 userRouter.post("/verify-email", verifyUserEmail);
 userRouter.post("/resend-otp", resendOtp);
 userRouter.get("/me", protect, getUser);
-
-// Temporary — remove after confirming email works
-userRouter.get("/test-email", testEmail);
-
 export default userRouter;

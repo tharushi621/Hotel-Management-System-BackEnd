@@ -8,20 +8,19 @@ import nodemailer from "nodemailer";
 dotenv.config();
 
 // ─── Gmail Transporter ────────────────────────────────────────────────────────
-// Uses port 465 + SSL which works reliably on Render free tier.
-// EMAIL      = tharurathnasekara2001@gmail.com
-// EMAIL_PASS = qciotadsxplrvowq  (16-char App Password, no spaces)
+// Port 587 + STARTTLS works on Render free tier (port 465 is blocked)
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
-  port: 465,
-  secure: true,
+  port: 587,
+  secure: false,        // false = STARTTLS (NOT plain text)
+  requireTLS: true,     // force TLS upgrade
   auth: {
     user: process.env.EMAIL,
     pass: process.env.EMAIL_PASS,
   },
-  connectionTimeout: 10000,
-  greetingTimeout: 10000,
-  socketTimeout: 15000,
+  connectionTimeout: 15000,
+  greetingTimeout: 15000,
+  socketTimeout: 20000,
 });
 
 // ─── Send OTP email ───────────────────────────────────────────────────────────
@@ -274,7 +273,6 @@ export async function resendOtp(req, res) {
     const otp = Math.floor(1000 + Math.random() * 9000);
     await new Otp({ email, otp }).save();
 
-    // ✅ Respond immediately, send in background
     res.status(200).json({ message: "OTP resent successfully" });
 
     sendOtpEmail(email, otp).catch((err) => {
@@ -338,13 +336,11 @@ export async function deleteUserById(req, res) {
   }
 }
 
-// ─── Test email — visit /api/users/test-email to confirm Gmail is working ─────
+// ─── Test email ───────────────────────────────────────────────────────────────
 export async function testEmail(req, res) {
   try {
-    // First verify the transporter config is valid
     await transporter.verify();
-    console.log("✅ Gmail SMTP connection verified");
-
+    console.log("✅ Gmail SMTP verified on port 587");
     await sendOtpEmail(process.env.EMAIL, 9999);
     res.json({ message: "✅ Test OTP email sent to " + process.env.EMAIL });
   } catch (err) {
@@ -352,7 +348,7 @@ export async function testEmail(req, res) {
     res.status(500).json({
       message: "❌ Test email failed",
       error: err.message,
-      hint: "Ensure EMAIL and EMAIL_PASS are set correctly on Render. EMAIL_PASS must be a 16-char Gmail App Password with no spaces.",
+      hint: "Check EMAIL and EMAIL_PASS on Render. EMAIL_PASS = 16-char Gmail App Password, no spaces.",
     });
   }
 }

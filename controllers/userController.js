@@ -3,44 +3,40 @@ import Otp from "../models/otp.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import dotenv from "dotenv";
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
 dotenv.config();
 
 // ═══════════════════════════════════════════════════════════════════════
-// NODEMAILER — sends via Gmail SMTP
+// RESEND — sends via HTTP (works on Render free tier)
 //
 // REQUIRED env vars:
-//   EMAIL      = tharurathnasekara2001@gmail.com
-//   EMAIL_PASS = your Gmail App Password (16-char, no spaces)
+//   RESEND_API_KEY = re_xxxxxxxxxxxxxxxxxxxx
 //
-// NOTE: Use a Gmail App Password (not your account password).
-// Generate one at: myaccount.google.com → Security → App Passwords
+// Get your API key at: resend.com → API Keys → Create API Key
 // ═══════════════════════════════════════════════════════════════════════
 
-// Create transporter once (reused across all email calls)
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 async function sendEmail({ to, subject, html }) {
-  if (!process.env.EMAIL || !process.env.EMAIL_PASS) {
-    throw new Error("EMAIL or EMAIL_PASS is missing from environment variables");
+  if (!process.env.RESEND_API_KEY) {
+    throw new Error("RESEND_API_KEY is missing from environment variables");
   }
 
-  const info = await transporter.sendMail({
-    from: `"Leonine Villa" <${process.env.EMAIL}>`,
+  const { data, error } = await resend.emails.send({
+    from: "Leonine Villa <onboarding@resend.dev>",
     to,
     subject,
     html,
   });
 
-  console.log(`✅ Email sent via Nodemailer | to: ${to} | messageId: ${info.messageId}`);
-  return info;
+  if (error) {
+    console.error("Resend error:", error);
+    throw new Error(error.message);
+  }
+
+  console.log(`✅ Email sent via Resend | to: ${to} | id: ${data.id}`);
+  return data;
 }
 
 // ─── OTP Email Template ───────────────────────────────────────────────────────
@@ -409,19 +405,18 @@ export async function deleteUserById(req, res) {
 }
 
 // ─── Test Email Route — GET /api/users/test-email ─────────────────────────────
-// Visit this URL after deploying to confirm Nodemailer is working.
 export async function testEmail(req, res) {
   try {
-    if (!process.env.EMAIL || !process.env.EMAIL_PASS) {
-      return res.status(500).json({ message: "❌ EMAIL or EMAIL_PASS is not set in environment" });
+    if (!process.env.RESEND_API_KEY) {
+      return res.status(500).json({ message: "❌ RESEND_API_KEY is not set in environment" });
     }
 
-    const testTo = req.query.email || process.env.EMAIL;
+    const testTo = req.query.email || "delivered@resend.dev";
     await sendOtpEmail(testTo, 9999);
 
     res.json({
       message: `✅ Test OTP email sent successfully to ${testTo}`,
-      note: "Check the inbox. Make sure EMAIL_PASS is a Gmail App Password (16 chars, no spaces).",
+      note: "Check the inbox. If using onboarding@resend.dev as sender, emails go to any address.",
     });
   } catch (err) {
     console.error("❌ Test email error:", err.message);
@@ -429,10 +424,9 @@ export async function testEmail(req, res) {
       message: "❌ Test email failed",
       error: err.message,
       checklist: [
-        "Is EMAIL set in your environment? (e.g. you@gmail.com)",
-        "Is EMAIL_PASS set? It must be a Gmail App Password, NOT your account password.",
-        "Generate one at: myaccount.google.com → Security → App Passwords",
-        "Make sure 2-Step Verification is enabled on your Google account first.",
+        "Is RESEND_API_KEY set in your Render environment variables?",
+        "Does the key start with re_?",
+        "Get your key at: resend.com → API Keys → Create API Key",
       ],
     });
   }

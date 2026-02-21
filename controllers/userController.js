@@ -279,58 +279,58 @@ export function getUser(req, res) {
   res.status(200).json({ message: "User found", user: req.user });
 }
 
-// ─── Verify Email (OTP check) ─────────────────────────────────────────────────
-export async function verifyUserEmail(req, res) {
-  try {
-    const { email, otp } = req.body;
-    if (!email || !otp)
-      return res.status(400).json({ message: "Email and OTP are required" });
+// // ─── Verify Email (OTP check) ─────────────────────────────────────────────────
+// export async function verifyUserEmail(req, res) {
+//   try {
+//     const { email, otp } = req.body;
+//     if (!email || !otp)
+//       return res.status(400).json({ message: "Email and OTP are required" });
 
-    const otpRecord = await Otp.findOne({ email }).sort({ createdAt: -1 });
-    if (!otpRecord)
-      return res.status(400).json({ message: "OTP is invalid or expired" });
+//     const otpRecord = await Otp.findOne({ email }).sort({ createdAt: -1 });
+//     if (!otpRecord)
+//       return res.status(400).json({ message: "OTP is invalid or expired" });
 
-    if (String(otpRecord.otp) !== String(otp))
-      return res.status(400).json({ message: "OTP is invalid" });
+//     if (String(otpRecord.otp) !== String(otp))
+//       return res.status(400).json({ message: "OTP is invalid" });
 
-    await User.findOneAndUpdate({ email }, { emailVerified: true });
-    await Otp.deleteOne({ _id: otpRecord._id });
+//     await User.findOneAndUpdate({ email }, { emailVerified: true });
+//     await Otp.deleteOne({ _id: otpRecord._id });
 
-    res.status(200).json({ message: "User email verified successfully" });
-  } catch (err) {
-    console.error("Verify email error:", err);
-    res.status(500).json({ message: "Email verification failed", error: err.message });
-  }
-}
+//     res.status(200).json({ message: "User email verified successfully" });
+//   } catch (err) {
+//     console.error("Verify email error:", err);
+//     res.status(500).json({ message: "Email verification failed", error: err.message });
+//   }
+// }
 
-// ─── Resend OTP ───────────────────────────────────────────────────────────────
-export async function resendOtp(req, res) {
-  try {
-    const { email } = req.body;
-    if (!email) return res.status(400).json({ message: "Email is required" });
+// // ─── Resend OTP ───────────────────────────────────────────────────────────────
+// export async function resendOtp(req, res) {
+//   try {
+//     const { email } = req.body;
+//     if (!email) return res.status(400).json({ message: "Email is required" });
 
-    const user = await User.findOne({ email });
-    if (!user) return res.status(404).json({ message: "User not found" });
-    if (user.emailVerified)
-      return res.status(400).json({ message: "Email is already verified." });
+//     const user = await User.findOne({ email });
+//     if (!user) return res.status(404).json({ message: "User not found" });
+//     if (user.emailVerified)
+//       return res.status(400).json({ message: "Email is already verified." });
 
-    await Otp.deleteMany({ email });
-    const otp = Math.floor(1000 + Math.random() * 9000);
-    await new Otp({ email, otp }).save();
-    console.log(`🔑 OTP resaved for ${email}: ${otp}`); // check Render logs for OTP
+//     await Otp.deleteMany({ email });
+//     const otp = Math.floor(1000 + Math.random() * 9000);
+//     await new Otp({ email, otp }).save();
+//     console.log(`🔑 OTP resaved for ${email}: ${otp}`); // check Render logs for OTP
 
-    res.status(200).json({ message: "OTP resent successfully" });
+//     res.status(200).json({ message: "OTP resent successfully" });
 
     // ⏸ EMAIL DISABLED — uncomment when ready
     // sendOtpEmail(email, otp).catch((err) => {
     //   console.error(`❌ Resend OTP email failed for ${email}:`, err.message);
     // });
 
-  } catch (err) {
-    console.error("Resend OTP error:", err);
-    res.status(500).json({ message: "Failed to resend OTP", error: err.message });
-  }
-}
+//   } catch (err) {
+//     console.error("Resend OTP error:", err);
+//     res.status(500).json({ message: "Failed to resend OTP", error: err.message });
+//   }
+// }
 
 // ─── Disable / Enable User ────────────────────────────────────────────────────
 export async function disableUser(req, res) {

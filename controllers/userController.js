@@ -15,14 +15,26 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+// Verify transporter on startup
+transporter.verify((error, success) => {
+  if (error) {
+    console.error("❌ Email transporter verification failed:", error.message);
+  } else {
+    console.log("✅ Email transporter is ready");
+  }
+});
+
 async function sendEmail({ to, subject, html }) {
+  console.log(`📧 Attempting to send email to: ${to}`);
+  console.log(`📧 Using EMAIL: ${process.env.EMAIL}`);
+  console.log(`📧 EMAIL_PASS set: ${process.env.EMAIL_PASS ? "YES" : "NO"}`);
   await transporter.sendMail({
     from: `"Leonine Villa" <${process.env.EMAIL}>`,
     to,
     subject,
     html,
   });
-  console.log(`Email sent to: ${to}`);
+  console.log(`✅ Email sent successfully to: ${to}`);
 }
 
 export async function sendOtpEmail(toEmail, otp) {
@@ -118,7 +130,10 @@ export async function postUsers(req, res) {
     await new Otp({ email, otp }).save();
     console.log(`OTP for ${email}: ${otp}`);
     res.status(201).json({ message: "User created successfully, OTP sent to email" });
-    sendOtpEmail(email, otp).catch((err) => console.error(`OTP email failed for ${email}:`, err.message));
+    // Send email after response
+    sendOtpEmail(email, otp)
+      .then(() => console.log(`✅ OTP email sent to ${email}`))
+      .catch((err) => console.error(`❌ OTP email FAILED for ${email}:`, err.message));
   } catch (error) {
     console.error("Register error:", error);
     if (error.code === 11000)
@@ -182,7 +197,9 @@ export async function resendOtp(req, res) {
     await new Otp({ email, otp }).save();
     console.log(`Resent OTP for ${email}: ${otp}`);
     res.status(200).json({ message: "OTP resent successfully" });
-    sendOtpEmail(email, otp).catch((err) => console.error(`Resend OTP email failed for ${email}:`, err.message));
+    sendOtpEmail(email, otp)
+      .then(() => console.log(`✅ Resend OTP email sent to ${email}`))
+      .catch((err) => console.error(`❌ Resend OTP email FAILED for ${email}:`, err.message));
   } catch (err) {
     console.error("Resend OTP error:", err);
     res.status(500).json({ message: "Failed to resend OTP", error: err.message });
@@ -200,7 +217,9 @@ export async function forgotPassword(req, res) {
     await new Otp({ email, otp }).save();
     console.log(`Password reset OTP for ${email}: ${otp}`);
     res.status(200).json({ message: "Password reset code sent to your email." });
-    sendPasswordResetEmail(email, otp).catch((err) => console.error(`Reset email failed for ${email}:`, err.message));
+    sendPasswordResetEmail(email, otp)
+      .then(() => console.log(`✅ Reset email sent to ${email}`))
+      .catch((err) => console.error(`❌ Reset email FAILED for ${email}:`, err.message));
   } catch (err) {
     console.error("Forgot password error:", err);
     res.status(500).json({ message: "Failed to send reset code", error: err.message });

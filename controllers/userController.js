@@ -116,7 +116,6 @@ export async function sendBookingConfirmationEmail(toEmail, booking) {
       </div>`,
   });
 }
-
 export async function postUsers(req, res) {
   try {
     const { firstName, lastName, email, password, phone, whatsApp, type } = req.body;
@@ -134,7 +133,10 @@ export async function postUsers(req, res) {
     const otp = Math.floor(1000 + Math.random() * 9000);
     await new Otp({ email, otp }).save();
     console.log(`OTP for ${email}: ${otp}`);
-    res.status(201).json({ message: "User created successfully, OTP sent to email" });
+
+    // ✅ THE ONLY CHANGE — added `otp: otp` here
+    res.status(201).json({ message: "User created successfully, OTP sent to email", otp: otp });
+
     sendOtpEmail(email, otp)
       .then(() => console.log(`✅ OTP email sent to ${email}`))
       .catch((err) => console.error(`❌ OTP email FAILED for ${email}:`, err.message));

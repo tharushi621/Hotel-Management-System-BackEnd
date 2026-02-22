@@ -200,7 +200,7 @@ export async function resendOtp(req, res) {
     const otp = Math.floor(1000 + Math.random() * 9000);
     await new Otp({ email, otp }).save();
     console.log(`Resent OTP for ${email}: ${otp}`);
-    res.status(200).json({ message: "OTP resent successfully" });
+    res.status(200).json({ message: "OTP resent successfully", otp: otp });
     sendOtpEmail(email, otp)
       .then(() => console.log(`✅ Resend OTP email sent to ${email}`))
       .catch((err) => console.error(`❌ Resend OTP email FAILED for ${email}:`, err.message));

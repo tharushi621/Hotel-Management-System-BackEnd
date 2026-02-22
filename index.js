@@ -2,6 +2,7 @@ import express from "express";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import cors from "cors";
+import nodemailer from "nodemailer";
 
 // Routes
 import userRouter from "./routes/userRoute.js";
@@ -15,7 +16,6 @@ dotenv.config();
 
 const app = express();
 
-// Hardcoded + env var fallback — .filter(Boolean) removes undefined if env var is missing
 const allowedOrigins = [
   "https://hotel-management-system-front-end.vercel.app",
   process.env.HOSTLINK,
@@ -23,21 +23,14 @@ const allowedOrigins = [
 
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow requests with no origin (Postman, curl, server-to-server)
     if (!origin) return callback(null, true);
-
-    // Allow exact match
     if (allowedOrigins.includes(origin)) return callback(null, true);
-
-    // Allow any Vercel preview deployment for this project
     if (
       origin.endsWith(".vercel.app") &&
       origin.includes("hotel-management-system")
     ) {
       return callback(null, true);
     }
-
-    // Block everything else
     return callback(new Error("Not allowed by CORS: " + origin));
   },
   credentials: true,
@@ -45,12 +38,8 @@ const corsOptions = {
   allowedHeaders: ["Content-Type", "Authorization"],
 };
 
-// CORS must be first — before any routes or body parser
 app.use(cors(corsOptions));
-
-// Handle all preflight OPTIONS requests immediately
 app.options("*", cors(corsOptions));
-
 app.use(express.json());
 
 mongoose
@@ -69,6 +58,30 @@ app.use("/api/feedbacks", feedbackRouter);
 // Health check
 app.get("/", (req, res) => {
   res.status(200).json({ message: "Server is running" });
+});
+
+// ✅ TEMPORARY EMAIL TEST — remove after debugging
+app.get("/test-email", async (req, res) => {
+  try {
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+    await transporter.verify();
+    await transporter.sendMail({
+      from: process.env.EMAIL,
+      to: process.env.EMAIL,
+      subject: "Test",
+      text: "Working!",
+    });
+    res.json({ success: true, message: "Email sent!" });
+  } catch (err) {
+    console.error("EMAIL ERROR:", err.message);
+    res.json({ success: false, error: err.message });
+  }
 });
 
 // 404 Fallback

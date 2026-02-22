@@ -4,39 +4,42 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import dotenv from "dotenv";
 import nodemailer from "nodemailer";
+import { google } from "googleapis";
 
 dotenv.config();
 
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 587,
-  secure: false,
-  auth: {
-    user: process.env.EMAIL,
-    pass: process.env.EMAIL_PASS,
-  },
-});
-
-// Verify transporter on startup
-transporter.verify((error, success) => {
-  if (error) {
-    console.error("❌ Email transporter verification failed:", error.message);
-  } else {
-    console.log("✅ Email transporter is ready");
-  }
-});
+async function createTransporter() {
+  const oauth2Client = new google.auth.OAuth2(
+    process.env.GMAIL_CLIENT_ID,
+    process.env.GMAIL_CLIENT_SECRET,
+    "https://developers.google.com/oauthplayground"
+  );
+  oauth2Client.setCredentials({
+    refresh_token: process.env.GMAIL_REFRESH_TOKEN,
+  });
+  const accessToken = await oauth2Client.getAccessToken();
+  return nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      type: "OAuth2",
+      user: process.env.EMAIL,
+      clientId: process.env.GMAIL_CLIENT_ID,
+      clientSecret: process.env.GMAIL_CLIENT_SECRET,
+      refreshToken: process.env.GMAIL_REFRESH_TOKEN,
+      accessToken: accessToken.token,
+    },
+  });
+}
 
 async function sendEmail({ to, subject, html }) {
-  console.log(`📧 Attempting to send email to: ${to}`);
-  console.log(`📧 Using EMAIL: ${process.env.EMAIL}`);
-  console.log(`📧 EMAIL_PASS set: ${process.env.EMAIL_PASS ? "YES" : "NO"}`);
+  const transporter = await createTransporter();
   await transporter.sendMail({
     from: `"Leonine Villa" <${process.env.EMAIL}>`,
     to,
     subject,
     html,
   });
-  console.log(`✅ Email sent successfully to: ${to}`);
+  console.log(`✅ Email sent to: ${to}`);
 }
 
 export async function sendOtpEmail(toEmail, otp) {
@@ -132,7 +135,6 @@ export async function postUsers(req, res) {
     await new Otp({ email, otp }).save();
     console.log(`OTP for ${email}: ${otp}`);
     res.status(201).json({ message: "User created successfully, OTP sent to email" });
-    // Send email after response
     sendOtpEmail(email, otp)
       .then(() => console.log(`✅ OTP email sent to ${email}`))
       .catch((err) => console.error(`❌ OTP email FAILED for ${email}:`, err.message));

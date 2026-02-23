@@ -25,7 +25,7 @@ const feedbackSchema = mongoose.Schema({
   },
   status: {
     type: String,
-    default: "Pending", // ✅ FIX: Was "Visible" — new feedback now requires admin approval before going public
+    default: "Pending", 
   },
   createdAt: {
     type: Date,

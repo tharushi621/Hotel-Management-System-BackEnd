@@ -17,8 +17,8 @@ categoryRouter.get("/:name", getCategoryByName);
 
 // Admin-protected
 categoryRouter.post("/", protect, createCategory);
-categoryRouter.put("/:id", protect, updateCategory);           // update by MongoDB _id
-categoryRouter.put("/name/:name", protect, updateCategoryByName); // update by name (used by frontend)
+categoryRouter.put("/:id", protect, updateCategory);         
+categoryRouter.put("/name/:name", protect, updateCategoryByName); 
 categoryRouter.delete("/:id", protect, deleteCategory);
 
 export default categoryRouter;

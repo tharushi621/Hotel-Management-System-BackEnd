@@ -2,12 +2,11 @@ import Booking from "../models/booking.js";
 import Room from "../models/room.js";
 import { sendBookingConfirmationEmail } from "./userController.js";
 
-// Helper: generate unique bookingId
 function generateBookingId() {
   return parseInt(`${Date.now()}${Math.floor(1000 + Math.random() * 9000)}`);
 }
 
-// ─── Create Booking by Room ID ────────────────────────────────────────────────
+// Create Booking by Room ID
 export async function createBooking(req, res) {
   try {
     if (!req.user) return res.status(401).json({ message: "Unauthorized" });
@@ -44,10 +43,8 @@ export async function createBooking(req, res) {
 
     const result = await newBooking.save();
 
-    // ✅ Respond to client IMMEDIATELY — no waiting for email
     res.status(201).json({ message: "Booking created", result });
 
-    // ✅ Send confirmation email in background after response
     const confirmTo = guestEmail || req.user.email;
     sendBookingConfirmationEmail(confirmTo, result).catch((err) => {
       console.error(`❌ Booking confirmation email failed for ${confirmTo}:`, err.message);
@@ -59,7 +56,7 @@ export async function createBooking(req, res) {
   }
 }
 
-// ─── Create Booking by Category ───────────────────────────────────────────────
+// Create Booking by Category
 export async function createBookingUsingCategory(req, res) {
   try {
     if (!req.user) return res.status(401).json({ message: "Unauthorized" });
@@ -101,10 +98,8 @@ export async function createBookingUsingCategory(req, res) {
 
     const result = await newBooking.save();
 
-    // ✅ Respond to client IMMEDIATELY — no waiting for email
     res.status(201).json({ message: "Booking created", result });
 
-    // ✅ Send confirmation email in background after response
     const confirmTo = guestEmail || req.user.email;
     sendBookingConfirmationEmail(confirmTo, result).catch((err) => {
       console.error(`❌ Booking confirmation email failed for ${confirmTo}:`, err.message);
@@ -116,7 +111,7 @@ export async function createBookingUsingCategory(req, res) {
   }
 }
 
-// ─── Get All Bookings (Admin) ─────────────────────────────────────────────────
+// Get All Bookings (Admin)
 export async function getAllBookings(req, res) {
   try {
     if (!req.user) return res.status(401).json({ message: "Please login" });
@@ -130,7 +125,7 @@ export async function getAllBookings(req, res) {
   }
 }
 
-// ─── Delete Booking (Admin) ───────────────────────────────────────────────────
+// Delete Booking (Admin) 
 export async function deleteBooking(req, res) {
   try {
     if (!req.user) return res.status(401).json({ message: "Please login" });
@@ -147,7 +142,7 @@ export async function deleteBooking(req, res) {
   }
 }
 
-// ─── Update Booking (Admin) ───────────────────────────────────────────────────
+// Update Booking (Admin)
 export async function updateBooking(req, res) {
   try {
     if (!req.user) return res.status(401).json({ message: "Please login" });
@@ -184,7 +179,7 @@ export async function updateBooking(req, res) {
   }
 }
 
-// ─── Filter Bookings by Date Range ───────────────────────────────────────────
+// Filter Bookings by Date Range
 export async function retrieveBookingByDate(req, res) {
   try {
     if (!req.user) return res.status(401).json({ message: "Please login" });

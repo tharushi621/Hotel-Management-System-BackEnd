@@ -39,7 +39,7 @@ async function sendEmail({ to, subject, html }) {
     subject,
     html,
   });
-  console.log(`✅ Email sent to: ${to}`);
+  console.log(`Email sent to: ${to}`);
 }
 
 export async function sendOtpEmail(toEmail, otp) {
@@ -134,11 +134,10 @@ export async function postUsers(req, res) {
     await new Otp({ email, otp }).save();
     console.log(`OTP for ${email}: ${otp}`);
 
-    // ✅ THE ONLY CHANGE — added `otp: otp` here
     res.status(201).json({ message: "User created successfully, OTP sent to email", otp: otp });
 
     sendOtpEmail(email, otp)
-      .then(() => console.log(`✅ OTP email sent to ${email}`))
+      .then(() => console.log(`OTP email sent to ${email}`))
       .catch((err) => console.error(`❌ OTP email FAILED for ${email}:`, err.message));
   } catch (error) {
     console.error("Register error:", error);
@@ -204,7 +203,7 @@ export async function resendOtp(req, res) {
     console.log(`Resent OTP for ${email}: ${otp}`);
     res.status(200).json({ message: "OTP resent successfully", otp: otp });
     sendOtpEmail(email, otp)
-      .then(() => console.log(`✅ Resend OTP email sent to ${email}`))
+      .then(() => console.log(`Resend OTP email sent to ${email}`))
       .catch((err) => console.error(`❌ Resend OTP email FAILED for ${email}:`, err.message));
   } catch (err) {
     console.error("Resend OTP error:", err);
@@ -224,7 +223,7 @@ export async function forgotPassword(req, res) {
     console.log(`Password reset OTP for ${email}: ${otp}`);
     res.status(200).json({ message: "Password reset code sent to your email." });
     sendPasswordResetEmail(email, otp)
-      .then(() => console.log(`✅ Reset email sent to ${email}`))
+      .then(() => console.log(`Reset email sent to ${email}`))
       .catch((err) => console.error(`❌ Reset email FAILED for ${email}:`, err.message));
   } catch (err) {
     console.error("Forgot password error:", err);

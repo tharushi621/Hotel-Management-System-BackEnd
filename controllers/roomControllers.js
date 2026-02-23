@@ -20,7 +20,6 @@ export async function createRoom(req, res) {
 export async function deleteRoom(req, res) {
   if (!isAdminValid(req)) return res.status(403).json({ message: "Forbidden" });
 
-  // ✅ FIX: cast to Number — roomId in schema is Number, params come as String
   const roomId = Number(req.params.roomId);
   try {
     const deleted = await Room.findOneAndDelete({ roomId });
@@ -35,7 +34,6 @@ export async function deleteRoom(req, res) {
 
 // FIND ROOM BY ID
 export async function findRoomById(req, res) {
-  // ✅ FIX: cast to Number
   const roomId = Number(req.params.roomId);
   try {
     const result = await Room.findOne({ roomId });
@@ -66,7 +64,6 @@ export async function getRooms(req, res) {
 export async function updateRoom(req, res) {
   if (!isAdminValid(req)) return res.status(403).json({ message: "Forbidden" });
 
-  // ✅ FIX: cast to Number
   const roomId = Number(req.params.roomId);
   try {
     const updated = await Room.findOneAndUpdate({ roomId }, req.body, {

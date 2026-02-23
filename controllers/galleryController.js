@@ -1,8 +1,6 @@
 import GalleryItem from "../models/gallery.js";
 
-/**
- * Create a gallery item (Admin only)
- */
+//Create a gallery item (Admin only)
 export async function createGalleryItems(req, res) {
   try {
     const user = req.user;
@@ -27,9 +25,7 @@ export async function createGalleryItems(req, res) {
   }
 }
 
-/**
- * Get all gallery items (Public)
- */
+//Get all gallery items (Public)
 export async function getGalleryItem(req, res) {
   try {
     const galleryItemList = await GalleryItem.find();
@@ -44,9 +40,7 @@ export async function getGalleryItem(req, res) {
   }
 }
 
-/**
- * Delete a gallery item (Admin only)
- */
+//Delete a gallery item (Admin only)
 export async function deleteGalleryItem(req, res) {
   try {
     const user = req.user;
@@ -71,9 +65,7 @@ export async function deleteGalleryItem(req, res) {
   }
 }
 
-/**
- * Update a gallery item (Admin only)
- */
+//Update a gallery item (Admin only)
 export async function updateGalleryItem(req, res) {
   try {
     const user = req.user;

@@ -80,7 +80,7 @@ export async function updateCategory(req, res) {
   }
 }
 
-// Update Category by Name (used by frontend UpdateCategoryForm)
+// Update Category by Name 
 export async function updateCategoryByName(req, res) {
   if (!isAdminValid(req)) return res.status(403).json({ message: "Forbidden" });
 

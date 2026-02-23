@@ -14,7 +14,7 @@ const bookingRouter = express.Router();
 // Admin Routes
 bookingRouter.get("/", protect, getAllBookings);
 bookingRouter.delete("/:id", protect, deleteBooking);
-bookingRouter.patch("/:bookingId", protect, updateBooking); // ✅ NEW: update booking (admin)
+bookingRouter.patch("/:bookingId", protect, updateBooking); 
 
 // Customer Routes
 bookingRouter.post("/", protect, createBooking);

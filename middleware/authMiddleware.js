@@ -14,10 +14,10 @@ export const protect = async (req, res, next) => {
       token = req.headers.authorization.split(" ")[1];
       const decoded = jwt.verify(token, process.env.JWT_KEY);
       req.user = await User.findById(decoded.id).select("-password");
-      return next(); // ✅ FIX: Added return to prevent fall-through to !token check
+      return next(); 
     } catch (err) {
       console.error(err);
-      return res.status(401).json({ message: "Not authorized, token failed" }); // ✅ FIX: Added return
+      return res.status(401).json({ message: "Not authorized, token failed" }); 
     }
   }
 

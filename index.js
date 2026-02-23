@@ -60,7 +60,6 @@ app.get("/", (req, res) => {
   res.status(200).json({ message: "Server is running" });
 });
 
-// ✅ TEMPORARY EMAIL TEST — remove after debugging
 app.get("/test-email", async (req, res) => {
   try {
     const transporter = nodemailer.createTransport({

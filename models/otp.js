@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 const otpSchema = mongoose.Schema({
   email: {
     type: String,
-    required: true, // ✅ FIX: Was "requires: true" (typo)
+    required: true, 
   },
   otp: {
     type: Number,
